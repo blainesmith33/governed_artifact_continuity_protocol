@@ -9,11 +9,17 @@
     "name": "REQUIRED_OWNER/REQUIRED_REPOSITORY",
     "branch": "REQUIRED",
     "base_commit": "REQUIRED_FULL_40_CHARACTER_COMMIT",
+    "implementation_parent": "REQUIRED_FULL_40_CHARACTER_COMMIT",
     "implementation_commit": "containing-commit"
   },
   "implemented": [],
   "changed_files": [],
   "validation": [],
+  "action_outcomes": {
+    "stage": "pending",
+    "commit": "pending",
+    "push": "pending"
+  },
   "publication": {
     "implementation_push": "pending",
     "receipt_publication": "commit-containing-this-receipt"

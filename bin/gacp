@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Dependency-free GACP manifest validation and repository guardrails."""
+"""Dependency-free GACP manifest validation and governed Git execution."""
 
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ import sys
 from typing import Any, Iterable
 
 
-VERSION = "0.1.0"
+VERSION = "0.2.0"
 SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 COMMIT_RE = re.compile(r"^[0-9a-f]{40}$")
 PLACEHOLDERS = {"", "REQUIRED", "REQUIRED_ISO_8601", "REQUIRED_ABSOLUTE_PATH"}
@@ -170,6 +170,30 @@ def validate_manifest(data: dict[str, Any]) -> None:
     if not COMMIT_RE.fullmatch(base_commit):
         raise GACPError("scope.base_commit must be a full 40-character lowercase commit SHA")
 
+    candidate_paths = scope.get("candidate_paths", [])
+    if not isinstance(candidate_paths, list) or not all(isinstance(item, str) for item in candidate_paths):
+        raise GACPError("scope.candidate_paths must be an array of path strings")
+    for index, path in enumerate(candidate_paths):
+        normalized = validate_relative_path(path, f"scope.candidate_paths[{index}]")
+        if not matches(normalized, allowed_paths):
+            raise GACPError(f"scope.candidate_paths[{index}] is outside scope.allowed_paths")
+        if matches(normalized, excluded_paths):
+            raise GACPError(f"scope.candidate_paths[{index}] is excluded")
+
+    action_set = set(actions)
+    if "commit" in action_set and "stage" not in action_set:
+        raise GACPError("commit authorization requires stage authorization")
+    if "push" in action_set and "commit" not in action_set:
+        raise GACPError("push authorization requires commit authorization")
+    if action_set.intersection({"stage", "commit", "push"}) and not candidate_paths:
+        raise GACPError("Git mutation authorization requires non-empty scope.candidate_paths")
+    if "commit" in action_set:
+        execution = require_object(data, "execution")
+        require_text(execution, "commit_message", "execution")
+        require_text(execution, "receipt_commit_message", "execution")
+        if not isinstance(execution.get("require_candidate_changes"), bool):
+            raise GACPError("execution.require_candidate_changes must be boolean")
+
     artifacts = require_list(data, "artifacts")
     for index, item in enumerate(artifacts):
         if not isinstance(item, dict):
@@ -247,7 +271,8 @@ def normalize_repository_url(url: str) -> str:
         if "@" in value.split("/", 1)[0]:
             value = value.split("@", 1)[1]
         value = value.split("/", 1)[1] if "/" in value else value
-    return value.removesuffix(".git").strip("/")
+    parts = value.removesuffix(".git").strip("/").split("/")
+    return "/".join(parts[-2:])
 
 
 def sha256_file(path: Path) -> str:
@@ -318,7 +343,7 @@ def verify_artifacts(repo: Path, manifest: dict[str, Any]) -> list[str]:
     return checked
 
 
-def preflight(repo: Path, manifest: dict[str, Any]) -> dict[str, Any]:
+def preflight(repo: Path, manifest: dict[str, Any], allow_candidates: bool = False) -> dict[str, Any]:
     destination = manifest["destination"]
     scope = manifest["scope"]
     validation = manifest["validation"]
@@ -335,20 +360,35 @@ def preflight(repo: Path, manifest: dict[str, Any]) -> dict[str, Any]:
     actual_repository = normalize_repository_url(remote_url)
     if actual_repository != destination["repository"]:
         raise GACPError(f"repository mismatch: expected {destination['repository']} got {actual_repository}")
+    head = run_git(repo, "rev-parse", "HEAD")
     if subprocess.run(
         ["git", "merge-base", "--is-ancestor", scope["base_commit"], "HEAD"], cwd=repo, check=False
     ).returncode != 0:
         raise GACPError("base commit is not an ancestor of HEAD")
+    if allow_candidates and head != scope["base_commit"]:
+        raise GACPError(f"mutation base mismatch: expected HEAD {scope['base_commit']} got {head}")
 
-    if validation["require_clean_tracked"]:
-        tracked = sorted(set(git_lines(repo, "diff", "--name-only", "--") + git_lines(repo, "diff", "--cached", "--name-only", "--")))
-        if tracked:
-            raise GACPError(f"tracked worktree/index changes present: {', '.join(tracked)}")
-
+    staged = git_lines(repo, "diff", "--cached", "--name-only", "--")
+    tracked = git_lines(repo, "diff", "--name-only", "--")
     untracked = git_lines(repo, "ls-files", "--others", "--exclude-standard")
-    unexpected_untracked = [path for path in untracked if not matches(path, validation["allow_untracked_paths"])]
-    if unexpected_untracked:
-        raise GACPError(f"unexpected untracked paths: {', '.join(unexpected_untracked)}")
+    if allow_candidates:
+        if staged:
+            raise GACPError(f"pre-existing staged changes are not permitted: {', '.join(staged)}")
+        candidate_patterns = scope["candidate_paths"]
+        unexpected = [
+            path
+            for path in sorted(set(tracked + untracked))
+            if not matches(path, candidate_patterns) and not matches(path, validation["allow_untracked_paths"])
+        ]
+        if unexpected:
+            raise GACPError(f"unexpected pre-existing work: {', '.join(unexpected)}")
+    else:
+        if validation["require_clean_tracked"] and (tracked or staged):
+            dirty = sorted(set(tracked + staged))
+            raise GACPError(f"tracked worktree/index changes present: {', '.join(dirty)}")
+        unexpected_untracked = [path for path in untracked if not matches(path, validation["allow_untracked_paths"])]
+        if unexpected_untracked:
+            raise GACPError(f"unexpected untracked paths: {', '.join(unexpected_untracked)}")
 
     protected_evidence = []
     for item in validation["protected_files"]:
@@ -369,12 +409,46 @@ def preflight(repo: Path, manifest: dict[str, Any]) -> dict[str, Any]:
         "repository": destination["repository"],
         "branch": branch,
         "upstream": upstream,
-        "head": run_git(repo, "rev-parse", "HEAD"),
+        "head": head,
         "base_commit": scope["base_commit"],
         "protected_files": protected_evidence,
         "artifacts": artifact_paths,
         "untracked_allowed": untracked,
     }
+
+
+def candidate_changes(repo: Path, manifest: dict[str, Any]) -> list[str]:
+    patterns = manifest["scope"]["candidate_paths"]
+    paths = set(git_lines(repo, "diff", "--name-only", "--"))
+    paths.update(git_lines(repo, "ls-files", "--others", "--exclude-standard"))
+    return sorted(path for path in paths if matches(path, patterns))
+
+
+def remote_branch_commit(repo: Path, remote: str, branch: str) -> str:
+    output = run_git(repo, "ls-remote", "--heads", remote, f"refs/heads/{branch}")
+    lines = output.splitlines()
+    if len(lines) != 1:
+        raise GACPError(f"remote branch is missing or ambiguous: {remote}/{branch}")
+    commit = lines[0].split()[0]
+    if not COMMIT_RE.fullmatch(commit):
+        raise GACPError(f"remote branch returned an invalid commit: {remote}/{branch}")
+    return commit
+
+
+def require_remote_commit(repo: Path, remote: str, branch: str, expected: str, label: str) -> None:
+    actual = remote_branch_commit(repo, remote, branch)
+    if actual != expected:
+        raise GACPError(f"{label}: expected {remote}/{branch} at {expected} got {actual}")
+
+
+def stage_exact(repo: Path, paths: list[str]) -> None:
+    if not paths:
+        raise GACPError("no authorized candidate changes are available to stage")
+    run_git(repo, "add", "--", *paths)
+    staged = git_lines(repo, "diff", "--cached", "--name-only", "--")
+    if staged != sorted(paths):
+        raise GACPError(f"staged scope mismatch: expected {', '.join(sorted(paths))} got {', '.join(staged)}")
+    run_git(repo, "diff", "--cached", "--check")
 
 
 def verify_scope(repo: Path, manifest: dict[str, Any]) -> dict[str, Any]:
@@ -456,57 +530,167 @@ def command_run(args: argparse.Namespace) -> None:
     manifest_path = Path(args.manifest).resolve()
     manifest = load_json(manifest_path)
     validate_manifest(manifest)
-    preflight_evidence = preflight(repo, manifest)
+    actions = set(manifest["scope"]["allowed_actions"])
+    mutation_requested = bool(actions.intersection({"stage", "commit", "push"}))
+    if not mutation_requested:
+        if args.receipt:
+            raise GACPError("validation-only run is non-mutating and cannot write a receipt")
+        preflight_evidence = preflight(repo, manifest)
+        scope_evidence = verify_scope(repo, manifest)
+        json_output(
+            {
+                "command": "run",
+                "operation_id": manifest["operation_id"],
+                "status": "PASS",
+                "actions": {
+                    "inspect": "performed",
+                    "validate": "performed",
+                    "stage": "not-authorized",
+                    "commit": "not-authorized",
+                    "push": "not-authorized",
+                },
+                "preflight": preflight_evidence,
+                "scope": scope_evidence,
+            }
+        )
+        return
+
+    preflight_evidence = preflight(repo, manifest, allow_candidates=True)
     scope_evidence = verify_scope(repo, manifest)
-    receipt_path = os.path.relpath(manifest_path, repo).replace("\\", "/")
+    candidates = candidate_changes(repo, manifest)
+    execution = manifest.get("execution", {})
+    if execution.get("require_candidate_changes") and not candidates:
+        raise GACPError("the manifest requires candidate changes but none are present")
+    remote = manifest["destination"]["remote"]
+    branch = manifest["destination"]["branch"]
+    base = manifest["scope"]["base_commit"]
+    if "push" in actions:
+        require_remote_commit(repo, remote, branch, base, "publication base mismatch")
+
+    stage_exact(repo, candidates)
+    if "commit" not in actions:
+        json_output(
+            {
+                "command": "run",
+                "status": "PASS",
+                "actions": {
+                    "stage": "performed",
+                    "commit": "not-authorized",
+                    "push": "not-authorized",
+                },
+                "staged_files": candidates,
+            }
+        )
+        return
+
+    run_git(repo, "commit", "-m", execution["commit_message"])
+    implementation_commit = run_git(repo, "rev-parse", "HEAD")
+    implementation_parent = run_git(repo, "rev-parse", "HEAD^")
+    if implementation_parent != base:
+        raise GACPError(f"implementation parent mismatch: expected {base} got {implementation_parent}")
+    committed = git_lines(repo, "diff-tree", "--no-commit-id", "--name-only", "-r", implementation_commit)
+    if committed != candidates:
+        raise GACPError(f"implementation commit scope mismatch: expected {', '.join(candidates)} got {', '.join(committed)}")
+
+    implementation_push = "not-authorized"
+    if "push" in actions:
+        run_git(repo, "push", remote, f"HEAD:refs/heads/{branch}")
+        require_remote_commit(
+            repo, remote, branch, implementation_commit, "implementation push verification failed"
+        )
+        implementation_push = f"verified:{implementation_commit}"
+
+    manifest_relative = os.path.relpath(manifest_path, repo).replace("\\", "/")
     receipt = {
         "protocol": "GACP",
         "receipt_version": "1.0",
         "operation_id": manifest["operation_id"],
         "created_at": dt.datetime.now(dt.timezone.utc).isoformat().replace("+00:00", "Z"),
-        "manifest_path": receipt_path,
+        "manifest_path": manifest_relative,
         "status": "PASS",
         "repository": {
             "name": manifest["destination"]["repository"],
-            "branch": preflight_evidence["branch"],
-            "base_commit": manifest["scope"]["base_commit"],
-            "implementation_commit": preflight_evidence["head"],
+            "branch": branch,
+            "base_commit": base,
+            "implementation_parent": implementation_parent,
+            "implementation_commit": implementation_commit,
         },
         "implemented": [
-            "manifest validation",
-            "repository and artifact preflight",
-            "changed-path scope verification",
-            "public-safety screening",
+            "manifest-authorized candidate staging",
+            "explicit implementation commit",
+            "normal non-force publication" if "push" in actions else "publication not authorized",
+            "post-publication remote verification" if "push" in actions else "local commit verification",
         ],
-        "changed_files": scope_evidence["changed_files"],
+        "changed_files": candidates,
         "validation": [
             {"name": "manifest", "status": "PASS"},
             {"name": "preflight", "status": "PASS"},
             {"name": "scope", "status": "PASS"},
             {"name": "public-safety", "status": "PASS"},
+            {"name": "staged-scope", "status": "PASS"},
+            {"name": "commit-lineage", "status": "PASS"},
+            {
+                "name": "remote-publication",
+                "status": "PASS" if "push" in actions else "NOT-AUTHORIZED",
+            },
         ],
+        "action_outcomes": {
+            "stage": "performed",
+            "commit": "performed",
+            "push": "performed-and-verified" if "push" in actions else "not-authorized",
+        },
         "publication": {
-            "implementation_push": "not-performed-by-run",
-            "receipt_publication": "not-requested" if not args.receipt else "pending",
+            "implementation_push": implementation_push,
+            "receipt_publication": "commit-containing-this-receipt",
         },
         "exceptions": [],
         "ready_for_real_migration": True,
         "preflight": preflight_evidence,
-        "scope": scope_evidence,
+        "scope": {**scope_evidence, "changed_files": candidates},
         "next_gate": manifest["authorization"]["current_gate"],
     }
-    if args.receipt:
-        output = Path(args.receipt).resolve()
-        relative = os.path.relpath(output, repo).replace("\\", "/")
-        if relative.startswith("../") or not matches(relative, manifest["scope"]["allowed_paths"]):
-            raise GACPError(f"receipt output is outside authorized paths: {relative}")
-        if output.exists():
-            raise GACPError(f"receipt output already exists: {relative}")
-        output.parent.mkdir(parents=True, exist_ok=True)
-        output.write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\n", encoding="utf-8", newline="\n")
-        json_output({"command": "run", "status": "PASS", "receipt": relative})
-    else:
+    if not {"generate", "write"}.issubset(actions):
         json_output(receipt)
+        return
+
+    relative = manifest["result"]["receipt_path"]
+    output = (repo / relative).resolve()
+    if args.receipt:
+        requested = os.path.relpath(Path(args.receipt).resolve(), repo).replace("\\", "/")
+        if requested != relative:
+            raise GACPError(f"receipt output differs from manifest result path: {requested}")
+    if relative.startswith("../") or not matches(relative, manifest["scope"]["allowed_paths"]):
+        raise GACPError(f"receipt output is outside authorized paths: {relative}")
+    if output.exists():
+        raise GACPError(f"receipt output already exists: {relative}")
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(
+        json.dumps(receipt, indent=2, sort_keys=True) + "\n", encoding="utf-8", newline="\n"
+    )
+    findings = scan_public_safety([output])
+    if findings:
+        raise GACPError("receipt public-safety scan failed: " + ", ".join(findings))
+    stage_exact(repo, [relative])
+    run_git(repo, "commit", "-m", execution["receipt_commit_message"])
+    receipt_commit = run_git(repo, "rev-parse", "HEAD")
+    if run_git(repo, "rev-parse", "HEAD^") != implementation_commit:
+        raise GACPError("receipt commit does not directly follow the implementation commit")
+    if "push" in actions:
+        require_remote_commit(
+            repo, remote, branch, implementation_commit, "receipt publication base mismatch"
+        )
+        run_git(repo, "push", remote, f"HEAD:refs/heads/{branch}")
+        require_remote_commit(repo, remote, branch, receipt_commit, "receipt push verification failed")
+    json_output(
+        {
+            "command": "run",
+            "status": "PASS",
+            "implementation_commit": implementation_commit,
+            "receipt_commit": receipt_commit,
+            "receipt": relative,
+            "push": "performed-and-verified" if "push" in actions else "not-authorized",
+        }
+    )
 
 
 def command_validate_receipt(args: argparse.Namespace) -> None:
@@ -532,7 +716,7 @@ def build_parser() -> argparse.ArgumentParser:
     verify_parser.add_argument("manifest")
     verify_parser.set_defaults(func=command_verify)
 
-    run_parser = subparsers.add_parser("run", help="run the compact validation path and optionally write a receipt")
+    run_parser = subparsers.add_parser("run", help="execute exactly the manifest-authorized validation and Git actions")
     run_parser.add_argument("manifest")
     run_parser.add_argument("--receipt")
     run_parser.set_defaults(func=command_run)

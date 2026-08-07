@@ -20,8 +20,16 @@
     "allowed_paths": [
       "REQUIRED"
     ],
+    "candidate_paths": [
+      "REQUIRED"
+    ],
     "excluded_paths": [],
     "base_commit": "REQUIRED_FULL_40_CHARACTER_COMMIT"
+  },
+  "execution": {
+    "commit_message": "REQUIRED",
+    "receipt_commit_message": "REQUIRED",
+    "require_candidate_changes": true
   },
   "artifacts": [
     {

@@ -105,8 +105,8 @@ Once the minimum operational kit is present, use these repository artifacts inst
 - `GACP_File_First_Governed_Handoff_Workflow.md` — owner-approved operating baseline;
 - `templates/gacp_operation_manifest.template.json` — parameterized operation definition;
 - `templates/gacp_codex_result_receipt.template.json` — durable Codex result/receipt format;
-- `bin/gacp` — dependency-free manifest, preflight, scope, safety, and receipt validator;
-- `tests/test_gacp.py` — executable guardrail tests.
+- `bin/gacp` — dependency-free manifest, preflight, scope, safety, exact staging, commit, normal-push, and receipt runner;
+- `tests/` — executable read-only and disposable-Git guardrail tests.
 
 The compact entry point is:
 

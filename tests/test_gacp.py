@@ -148,16 +148,15 @@ class GACPTestCase(unittest.TestCase):
         self.assertEqual(result.returncode, 2)
         self.assertIn("public-safety scan failed", result.stderr)
 
-    def test_compact_run_writes_receipt_once(self) -> None:
-        result = self.gacp("run", str(self.manifest_path), "--receipt", "receipts/result.json")
+    def test_compact_validate_only_run_does_not_write(self) -> None:
+        before = command("git", "rev-parse", "HEAD", cwd=self.repo).stdout.strip()
+        result = self.gacp("run", str(self.manifest_path))
         self.assertEqual(result.returncode, 0, result.stderr)
-        receipt = json.loads((self.repo / "receipts" / "result.json").read_text(encoding="utf-8"))
-        self.assertEqual(receipt["status"], "PASS")
-        validated = self.gacp("validate-receipt", "receipts/result.json")
-        self.assertEqual(validated.returncode, 0, validated.stderr)
-        second = self.gacp("run", str(self.manifest_path), "--receipt", "receipts/result.json")
-        self.assertEqual(second.returncode, 2)
-        self.assertIn("unexpected untracked paths", second.stderr)
+        self.assertEqual(command("git", "rev-parse", "HEAD", cwd=self.repo).stdout.strip(), before)
+        self.assertFalse((self.repo / "receipts" / "result.json").exists())
+        attempted_write = self.gacp("run", str(self.manifest_path), "--receipt", "receipts/result.json")
+        self.assertEqual(attempted_write.returncode, 2)
+        self.assertIn("validation-only run is non-mutating", attempted_write.stderr)
 
 
 if __name__ == "__main__":
