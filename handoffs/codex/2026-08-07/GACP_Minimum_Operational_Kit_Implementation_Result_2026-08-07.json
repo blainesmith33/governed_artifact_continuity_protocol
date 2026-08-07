@@ -1,0 +1,131 @@
+{
+  "protocol": "GACP",
+  "receipt_version": "1.0",
+  "operation_id": "gacp-minimum-operational-kit-2026-08-07",
+  "created_at": "2026-08-07T22:16:12.257898Z",
+  "manifest_path": "operations/2026-08-07/minimum-operational-kit.json",
+  "status": "PASS",
+  "repository": {
+    "name": "blainesmith33/governed_artifact_continuity_protocol",
+    "branch": "gacp/new-chat-handoff-automation-framework-20260803",
+    "base_commit": "96a7b79106a1488346499fb91e3bb7676b0e516b",
+    "implementation_parent": "96a7b79106a1488346499fb91e3bb7676b0e516b",
+    "implementation_commit": "637816bde6bbda7277915733a7b8bc559ac5dc53",
+    "receipt_commit": "containing-commit",
+    "main_unchanged": "c6c70be0ee8961abbf5eaf5fbc8ea1041043226b"
+  },
+  "implemented": [
+    "Integrated the owner-approved file-first workflow at its existing root path with exact approved bytes preserved.",
+    "Added a parameterized JSON operation-manifest template.",
+    "Added a parameterized JSON Codex result/receipt template.",
+    "Added a dependency-free executable GACP command for manifest validation, repository preflight, artifact integrity, protected-work checks, changed-path scope enforcement, public-safety screening, compact run receipts, and result-receipt validation.",
+    "Added a machine-readable manifest for this implementation operation.",
+    "Extended AGENTS.md so fresh agents can discover and invoke the operational kit from repository state.",
+    "Added focused tests for successful preflight, missing authorization, protected hash mismatch, out-of-scope changes, sensitive-content detection, compact receipt generation, duplicate-run stopping, and receipt validation."
+  ],
+  "changed_files": [
+    {
+      "path": "AGENTS.md",
+      "change": "modified",
+      "sha256": "0d43c8865b74d752b5521c6c805cbb7255633e319e451cda7fb8fd2e3d4876a9"
+    },
+    {
+      "path": "GACP_File_First_Governed_Handoff_Workflow.md",
+      "change": "added-exact-content",
+      "sha256": "6c59fbc2f49786a9a3bd3499256332950fd1639269f40770ae12fd0b04c33458",
+      "bytes": 16822,
+      "lines": 378
+    },
+    {
+      "path": "bin/gacp",
+      "change": "added-executable",
+      "sha256": "23d3c1e4b487f7697ee4d60407d00d0e4e8272fe1c5774af7cecb467dd3eb88a"
+    },
+    {
+      "path": "operations/2026-08-07/minimum-operational-kit.json",
+      "change": "added",
+      "sha256": "60ef3edeb62a784483133dfac7aebee503136ec8c8f4af1833d66a5f0bf442ef"
+    },
+    {
+      "path": "templates/gacp_codex_result_receipt.template.json",
+      "change": "added",
+      "sha256": "0c4fc120b6d31b28f51de6d3a3f4fc804a93b7b7b7365523d7a316ed7b5720a1"
+    },
+    {
+      "path": "templates/gacp_operation_manifest.template.json",
+      "change": "added",
+      "sha256": "b4b642f56ff22c8d5e0c709fe06af7806bb3ee135c480f50571228402ce27875"
+    },
+    {
+      "path": "tests/test_gacp.py",
+      "change": "added",
+      "sha256": "4183cdb0369ed9d10627295a59be1f554d547401f905c4f83c8b72446e579e98"
+    }
+  ],
+  "compact_operational_path": "./bin/gacp run <operation-manifest.json>",
+  "validation": [
+    {
+      "name": "manifest-validation",
+      "status": "PASS",
+      "evidence": "The real implementation manifest passed ./bin/gacp validate-manifest."
+    },
+    {
+      "name": "real-operation-compact-run",
+      "status": "PASS",
+      "evidence": "./bin/gacp run operations/2026-08-07/minimum-operational-kit.json passed against implementation commit 637816bde6bbda7277915733a7b8bc559ac5dc53."
+    },
+    {
+      "name": "guardrail-tests",
+      "status": "PASS",
+      "evidence": "Five test methods passed, including positive execution and required stop conditions."
+    },
+    {
+      "name": "scope-and-public-safety",
+      "status": "PASS",
+      "evidence": "The kit verified exactly seven authorized implementation files and found no configured sensitive-content pattern."
+    },
+    {
+      "name": "workflow-byte-identity",
+      "status": "PASS",
+      "evidence": "The tracked workflow remains SHA-256 6c59fbc2f49786a9a3bd3499256332950fd1639269f40770ae12fd0b04c33458, 16,822 bytes, and 378 lines."
+    },
+    {
+      "name": "format-and-whitespace",
+      "status": "PASS",
+      "evidence": "Implementation files passed UTF-8, LF, final-newline, JSON parsing, Python compilation, executable-mode, and git diff --check validation."
+    },
+    {
+      "name": "implementation-publication",
+      "status": "PASS",
+      "evidence": "Local HEAD and the remote working branch synchronized at implementation commit 637816bde6bbda7277915733a7b8bc559ac5dc53 with ahead/behind 0/0."
+    }
+  ],
+  "publication": {
+    "implementation_push": "verified",
+    "implementation_remote_commit": "637816bde6bbda7277915733a7b8bc559ac5dc53",
+    "receipt_publication": "commit-containing-this-receipt"
+  },
+  "exceptions": [],
+  "technical_environment_notes": [
+    "The standard patch helper experienced loopback sandbox initialization failures while updating existing files; exact patch hunks were applied with Git's patch engine. This did not change scope, validation, or repository invariants."
+  ],
+  "ready_for_real_migration": true,
+  "remaining_gaps": [
+    "Owner substantive acceptance is pending.",
+    "Merge into main remains separately governed and was not performed.",
+    "The first real migration using the kit remains the next production operation; no additional communication proof is needed."
+  ],
+  "next_gate": "owner-acceptance",
+  "immediate_owner_decision": {
+    "required": true,
+    "category": "final substantive acceptance",
+    "merge_authorization_required_separately": true
+  },
+  "scope_confirmation": {
+    "gacp_only": true,
+    "other_repositories_modified": false,
+    "main_modified": false,
+    "branches_deleted": false,
+    "raw_private_archives_published": false
+  }
+}
