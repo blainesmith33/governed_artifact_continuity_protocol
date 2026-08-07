@@ -1,0 +1,107 @@
+{
+  "action_outcomes": {
+    "commit": "performed",
+    "push": "performed-and-verified",
+    "stage": "performed"
+  },
+  "changed_files": [
+    "AGENTS.md",
+    "bin/gacp",
+    "operations/2026-08-07/minimum-operational-kit-correction.json",
+    "templates/gacp_codex_result_receipt.template.json",
+    "templates/gacp_operation_manifest.template.json",
+    "tests/test_gacp.py",
+    "tests/test_gacp_git_actions.py"
+  ],
+  "created_at": "2026-08-07T23:10:16.930228Z",
+  "exceptions": [],
+  "implemented": [
+    "manifest-authorized candidate staging",
+    "explicit implementation commit",
+    "normal non-force publication",
+    "post-publication remote verification"
+  ],
+  "manifest_path": "operations/2026-08-07/minimum-operational-kit-correction.json",
+  "next_gate": "acceptance",
+  "operation_id": "gacp-minimum-operational-kit-correction-2026-08-07",
+  "preflight": {
+    "artifacts": [
+      "GACP_File_First_Governed_Handoff_Workflow.md"
+    ],
+    "base_commit": "94b66d447ad87e844384ef84627bf772bed33952",
+    "branch": "gacp/new-chat-handoff-automation-framework-20260803",
+    "head": "94b66d447ad87e844384ef84627bf772bed33952",
+    "protected_files": [
+      {
+        "path": "GACP_File_First_Governed_Handoff_Workflow.md",
+        "sha256": "6c59fbc2f49786a9a3bd3499256332950fd1639269f40770ae12fd0b04c33458"
+      }
+    ],
+    "repository": "blainesmith33/governed_artifact_continuity_protocol",
+    "untracked_allowed": [
+      "operations/2026-08-07/minimum-operational-kit-correction.json",
+      "tests/test_gacp_git_actions.py"
+    ],
+    "upstream": "origin/gacp/new-chat-handoff-automation-framework-20260803"
+  },
+  "protocol": "GACP",
+  "publication": {
+    "implementation_push": "verified:4e17e5309469ec468c08561c9a7745a4b3354959",
+    "receipt_publication": "commit-containing-this-receipt"
+  },
+  "ready_for_real_migration": true,
+  "receipt_version": "1.0",
+  "repository": {
+    "base_commit": "94b66d447ad87e844384ef84627bf772bed33952",
+    "branch": "gacp/new-chat-handoff-automation-framework-20260803",
+    "implementation_commit": "4e17e5309469ec468c08561c9a7745a4b3354959",
+    "implementation_parent": "94b66d447ad87e844384ef84627bf772bed33952",
+    "name": "blainesmith33/governed_artifact_continuity_protocol"
+  },
+  "scope": {
+    "base_commit": "94b66d447ad87e844384ef84627bf772bed33952",
+    "changed_files": [
+      "AGENTS.md",
+      "bin/gacp",
+      "operations/2026-08-07/minimum-operational-kit-correction.json",
+      "templates/gacp_codex_result_receipt.template.json",
+      "templates/gacp_operation_manifest.template.json",
+      "tests/test_gacp.py",
+      "tests/test_gacp_git_actions.py"
+    ],
+    "head": "94b66d447ad87e844384ef84627bf772bed33952",
+    "public_safety": "PASS",
+    "scope": "PASS"
+  },
+  "status": "PASS",
+  "validation": [
+    {
+      "name": "manifest",
+      "status": "PASS"
+    },
+    {
+      "name": "preflight",
+      "status": "PASS"
+    },
+    {
+      "name": "scope",
+      "status": "PASS"
+    },
+    {
+      "name": "public-safety",
+      "status": "PASS"
+    },
+    {
+      "name": "staged-scope",
+      "status": "PASS"
+    },
+    {
+      "name": "commit-lineage",
+      "status": "PASS"
+    },
+    {
+      "name": "remote-publication",
+      "status": "PASS"
+    }
+  ]
+}
