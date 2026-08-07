@@ -1,0 +1,121 @@
+{
+  "protocol": "GACP",
+  "receipt_version": "1.0",
+  "operation_id": "gacp-operational-kit-merge-with-reporting-governance-2026-08-07",
+  "created_at": "2026-08-07T16:38:03-07:00",
+  "manifest_path": "handoffs/chatgpt/2026-08-07/GACP_Operational_Kit_Merge_With_Reporting_Governance_Handoff_2026-08-07.md",
+  "status": "PASS",
+  "authority": {
+    "retrieval_commit": "cb8b32504ecc80f05ca75e0227bd4ea517c534e4",
+    "prior_merge_handoff_commit": "8e0080164b3c92f1892c0145228fa30c46b254d6",
+    "owner_acceptance_commit": "a886314a50257fc6fa874359244d5d70bc9dfe34",
+    "reporting_governance_commit": "9b93f56b587d0b81b7c64571f63e30498d0ff660",
+    "reporting_bootstrap_commit": "37eb6bcabe795c7314a59458ef4e9482e406c635"
+  },
+  "repository": {
+    "name": "blainesmith33/governed_artifact_continuity_protocol",
+    "branch": "main",
+    "base_commit": "c6c70be0ee8961abbf5eaf5fbc8ea1041043226b",
+    "implementation_commit": "cb8b32504ecc80f05ca75e0227bd4ea517c534e4",
+    "remote_main_commit": "cb8b32504ecc80f05ca75e0227bd4ea517c534e4"
+  },
+  "pre_merge": {
+    "working_branch": "gacp/new-chat-handoff-automation-framework-20260803",
+    "working_branch_commit": "cb8b32504ecc80f05ca75e0227bd4ea517c534e4",
+    "local_main_commit": "c6c70be0ee8961abbf5eaf5fbc8ea1041043226b",
+    "remote_main_commit": "c6c70be0ee8961abbf5eaf5fbc8ea1041043226b",
+    "working_branch_ahead_behind": "0/0",
+    "main_ahead_behind": "0/0"
+  },
+  "implemented": [
+    "fast-forward integration of the accepted GACP minimum operational kit into main",
+    "integration of mandatory owner-facing reporting governance into main",
+    "normal non-force publication of authoritative main",
+    "post-publication authoritative-state verification",
+    "governed merge-result receipt publication"
+  ],
+  "integrated_commits": [
+    {"sha": "5972d3594c7d78f34f880c524b266c906b25067e", "subject": "Add GACP new-chat automation framework handoff"},
+    {"sha": "c6acce4c6fb1334eec8924cf8c6db9a00ef1fed5", "subject": "Add GACP operationalization assessment"},
+    {"sha": "b2b88f8ffc8e9043e2108dc13539aed80d02465b", "subject": "Add repository agent bootstrap governance"},
+    {"sha": "96a7b79106a1488346499fb91e3bb7676b0e516b", "subject": "Add minimum operational kit implementation handoff"},
+    {"sha": "637816bde6bbda7277915733a7b8bc559ac5dc53", "subject": "Implement GACP minimum operational kit"},
+    {"sha": "31377f7f0790e2a6109f2744525d705a274c238f", "subject": "Add GACP operational kit result receipt"},
+    {"sha": "94b66d447ad87e844384ef84627bf772bed33952", "subject": "Add minimum operational kit corrective handoff"},
+    {"sha": "4e17e5309469ec468c08561c9a7745a4b3354959", "subject": "Correct GACP compact Git execution"},
+    {"sha": "8aeca7ece8a11bf67fbad3e8498a852e28da43fd", "subject": "Add GACP corrective result receipt"},
+    {"sha": "a886314a50257fc6fa874359244d5d70bc9dfe34", "subject": "Record GACP operational kit acceptance"},
+    {"sha": "8e0080164b3c92f1892c0145228fa30c46b254d6", "subject": "Authorize GACP operational kit merge"},
+    {"sha": "9b93f56b587d0b81b7c64571f63e30498d0ff660", "subject": "Record owner-facing reporting governance"},
+    {"sha": "37eb6bcabe795c7314a59458ef4e9482e406c635", "subject": "Require owner-facing agent summaries"},
+    {"sha": "cb8b32504ecc80f05ca75e0227bd4ea517c534e4", "subject": "Supersede GACP merge handoff with reporting governance"}
+  ],
+  "changed_files": [
+    "AGENTS.md",
+    "GACP_File_First_Governed_Handoff_Workflow.md",
+    "bin/gacp",
+    "handoffs/chatgpt/2026-08-03/GACP_New_Chat_Handoff_2026-08-03.md",
+    "handoffs/chatgpt/2026-08-07/GACP_Minimum_Operational_Kit_Acceptance_2026-08-07.md",
+    "handoffs/chatgpt/2026-08-07/GACP_Minimum_Operational_Kit_Corrective_Handoff_2026-08-07.md",
+    "handoffs/chatgpt/2026-08-07/GACP_Minimum_Operational_Kit_Implementation_Handoff_2026-08-07.md",
+    "handoffs/chatgpt/2026-08-07/GACP_Minimum_Operational_Kit_Merge_Authorization_Handoff_2026-08-07.md",
+    "handoffs/chatgpt/2026-08-07/GACP_Operational_Kit_Merge_With_Reporting_Governance_Handoff_2026-08-07.md",
+    "handoffs/chatgpt/2026-08-07/GACP_Owner_Facing_Reporting_Governance_Amendment_2026-08-07.md",
+    "handoffs/codex/2026-08-07/GACP_Minimum_Operational_Kit_Corrective_Result_2026-08-07.json",
+    "handoffs/codex/2026-08-07/GACP_Minimum_Operational_Kit_Implementation_Result_2026-08-07.json",
+    "handoffs/codex/2026-08-07/GACP_Operationalization_Assessment_2026-08-07.md",
+    "operations/2026-08-07/minimum-operational-kit-correction.json",
+    "operations/2026-08-07/minimum-operational-kit.json",
+    "templates/gacp_codex_result_receipt.template.json",
+    "templates/gacp_operation_manifest.template.json",
+    "tests/test_gacp.py",
+    "tests/test_gacp_git_actions.py"
+  ],
+  "validation": [
+    {"name": "repository-identity-and-remote", "status": "PASS"},
+    {"name": "working-branch-and-main-synchronization", "status": "PASS"},
+    {"name": "governed-lineage-and-authority", "status": "PASS"},
+    {"name": "owner-acceptance-and-corrective-receipt-integrity", "status": "PASS"},
+    {"name": "mandatory-owner-facing-reporting-governance", "status": "PASS"},
+    {"name": "pre-merge-guardrail-suite", "status": "PASS", "detail": "14 tests passed"},
+    {"name": "post-merge-guardrail-suite", "status": "PASS", "detail": "14 tests passed"},
+    {"name": "manifest-and-receipt-validation", "status": "PASS"},
+    {"name": "protected-workflow-sha256", "status": "PASS", "sha256": "6c59fbc2f49786a9a3bd3499256332950fd1639269f40770ae12fd0b04c33458"},
+    {"name": "candidate-scope", "status": "PASS", "detail": "19 governed files"},
+    {"name": "public-safety", "status": "PASS", "detail": "19 files scanned; no findings"},
+    {"name": "authoritative-remote-main", "status": "PASS", "commit": "cb8b32504ecc80f05ca75e0227bd4ea517c534e4"}
+  ],
+  "action_outcomes": {
+    "merge": "fast-forward-performed",
+    "main_push": "performed-and-verified",
+    "receipt_commit": "commit-containing-this-receipt",
+    "receipt_push": "commit-containing-this-receipt"
+  },
+  "publication": {
+    "mechanism": "fast-forward merge and normal non-force push",
+    "main_push": "verified:cb8b32504ecc80f05ca75e0227bd4ea517c534e4",
+    "receipt_branch": "gacp/new-chat-handoff-automation-framework-20260803",
+    "receipt_publication": "commit-containing-this-receipt"
+  },
+  "authoritative_state": {
+    "operational_kit_on_main": true,
+    "owner_facing_reporting_governance_on_main": true,
+    "main_ahead_behind": "0/0",
+    "ready_for_routine_use": true
+  },
+  "safety": {
+    "force_push": false,
+    "history_rewrite": false,
+    "branch_deletion": false,
+    "scope_expansion": false,
+    "other_repository_modification": false
+  },
+  "exceptions": [],
+  "ready_for_real_migration": true,
+  "owner_gate": {
+    "remaining": false,
+    "category": "none",
+    "next_action": "ChatGPT retrieves this receipt, independently assesses it, and provides the mandatory owner-facing summary."
+  },
+  "next_gate": "complete"
+}
