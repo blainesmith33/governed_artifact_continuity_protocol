@@ -97,3 +97,19 @@ The workflow must not depend on a particular model remembering earlier conversat
 Agent reasoning may vary, but governed inputs, allowed actions, validation requirements, stop conditions, and durable outputs must remain explicit enough that a different conforming agent can resume the operation from Git.
 
 No repository file can control an agent that has not been given access to or instructed to use this repository. Once an agent is operating on GACP, this file is the mandatory bootstrap entrypoint.
+
+## Minimum operational kit
+
+Once the minimum operational kit is present, use these repository artifacts instead of reconstructing routine checks from conversation history:
+
+- `GACP_File_First_Governed_Handoff_Workflow.md` — owner-approved operating baseline;
+- `templates/gacp_operation_manifest.template.json` — parameterized operation definition;
+- `templates/gacp_codex_result_receipt.template.json` — durable Codex result/receipt format;
+- `bin/gacp` — dependency-free manifest, preflight, scope, safety, and receipt validator;
+- `tests/test_gacp.py` — executable guardrail tests.
+
+The compact entry point is:
+
+`./bin/gacp run <operation-manifest.json>`
+
+Use `./bin/gacp --help` for the narrower validation commands. A manifest grants no authority by itself: its authorization reference and repository evidence must be valid, and the runner stops on mismatched identity, state, hashes, scope, safety findings, or missing approval.

@@ -1,0 +1,64 @@
+{
+  "protocol": "GACP",
+  "manifest_version": "1.0",
+  "operation_id": "REQUIRED",
+  "created_at": "REQUIRED_ISO_8601",
+  "source_environment": "REQUIRED",
+  "destination": {
+    "project": "REQUIRED",
+    "repository": "REQUIRED_OWNER/REQUIRED_REPOSITORY",
+    "local_path": "REQUIRED_ABSOLUTE_PATH",
+    "remote": "origin",
+    "branch": "REQUIRED",
+    "upstream": "origin/REQUIRED"
+  },
+  "scope": {
+    "allowed_actions": [
+      "inspect",
+      "validate"
+    ],
+    "allowed_paths": [
+      "REQUIRED"
+    ],
+    "excluded_paths": [],
+    "base_commit": "REQUIRED_FULL_40_CHARACTER_COMMIT"
+  },
+  "artifacts": [
+    {
+      "path": "REQUIRED",
+      "role": "REQUIRED",
+      "integration_mode": "exact-content",
+      "destination_path": "REQUIRED",
+      "media_type": "text/markdown",
+      "bytes": 0,
+      "sha256": "REQUIRED_SHA256",
+      "approval_status": "pending-owner-review",
+      "approval_reference": "REQUIRED",
+      "dependencies": []
+    }
+  ],
+  "sensitivity": {
+    "classification": "public",
+    "public_repository": true,
+    "publication_authorized": false
+  },
+  "validation": {
+    "require_clean_tracked": true,
+    "allow_untracked_paths": [],
+    "protected_files": [
+      {
+        "path": "REQUIRED",
+        "sha256": "REQUIRED_SHA256"
+      }
+    ]
+  },
+  "authorization": {
+    "start_authorized": false,
+    "authorized_by": "REQUIRED",
+    "approval_reference": "REQUIRED",
+    "current_gate": "start"
+  },
+  "result": {
+    "receipt_path": "REQUIRED"
+  }
+}

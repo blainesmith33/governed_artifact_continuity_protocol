@@ -1,0 +1,557 @@
+#!/usr/bin/env python3
+"""Dependency-free GACP manifest validation and repository guardrails."""
+
+from __future__ import annotations
+
+import argparse
+import datetime as dt
+import fnmatch
+import hashlib
+import json
+import os
+from pathlib import Path
+import re
+import subprocess
+import sys
+from typing import Any, Iterable
+
+
+VERSION = "0.1.0"
+SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
+COMMIT_RE = re.compile(r"^[0-9a-f]{40}$")
+PLACEHOLDERS = {"", "REQUIRED", "REQUIRED_ISO_8601", "REQUIRED_ABSOLUTE_PATH"}
+ALLOWED_ACTIONS = {
+    "inspect",
+    "validate",
+    "generate",
+    "write",
+    "stage",
+    "commit",
+    "push",
+    "prepare-pr",
+    "synchronize",
+}
+GATES = {"start", "publication", "exception", "acceptance", "merge", "complete"}
+SENSITIVITY = {"public", "private", "restricted"}
+INTEGRATION_MODES = {"exact-content", "governed-instruction"}
+SECRET_PATTERNS = {
+    "aws-access-key": re.compile(rb"AKIA[0-9A-Z]{16}"),
+    "github-token": re.compile(rb"gh[pousr]_[A-Za-z0-9]{20,}"),
+    "private-key": re.compile(rb"-----BEGIN [A-Z ]*PRIVATE KEY-----"),
+    "bearer-token": re.compile(rb"Authorization:\s*Bearer\s+[A-Za-z0-9._-]+", re.I),
+    "credentialed-url": re.compile(rb"https?://[^\s/:]+:[^\s/@]+@", re.I),
+    "jwt": re.compile(rb"[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}"),
+}
+
+
+class GACPError(RuntimeError):
+    """A governed stop condition."""
+
+
+def run_git(repo: Path, *args: str, check: bool = True) -> str:
+    result = subprocess.run(
+        ["git", *args],
+        cwd=repo,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    if check and result.returncode != 0:
+        detail = result.stderr.strip() or result.stdout.strip() or "unknown git failure"
+        raise GACPError(f"git {' '.join(args)} failed: {detail}")
+    return result.stdout.strip()
+
+
+def git_lines(repo: Path, *args: str) -> list[str]:
+    output = run_git(repo, *args)
+    return [line for line in output.splitlines() if line]
+
+
+def repository_root(start: Path | None = None) -> Path:
+    base = (start or Path.cwd()).resolve()
+    result = subprocess.run(
+        ["git", "rev-parse", "--show-toplevel"],
+        cwd=base,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    if result.returncode != 0:
+        raise GACPError(f"not inside a Git repository: {base}")
+    return Path(result.stdout.strip()).resolve()
+
+
+def load_json(path: Path) -> dict[str, Any]:
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except FileNotFoundError as exc:
+        raise GACPError(f"missing JSON file: {path}") from exc
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise GACPError(f"invalid UTF-8 JSON file {path}: {exc}") from exc
+    if not isinstance(data, dict):
+        raise GACPError(f"JSON root must be an object: {path}")
+    return data
+
+
+def require_object(parent: dict[str, Any], key: str) -> dict[str, Any]:
+    value = parent.get(key)
+    if not isinstance(value, dict):
+        raise GACPError(f"{key} must be an object")
+    return value
+
+
+def require_list(parent: dict[str, Any], key: str) -> list[Any]:
+    value = parent.get(key)
+    if not isinstance(value, list):
+        raise GACPError(f"{key} must be an array")
+    return value
+
+
+def require_text(parent: dict[str, Any], key: str, prefix: str = "") -> str:
+    value = parent.get(key)
+    label = f"{prefix}.{key}" if prefix else key
+    if not isinstance(value, str) or value in PLACEHOLDERS:
+        raise GACPError(f"{label} must be a non-placeholder string")
+    return value
+
+
+def validate_relative_path(value: str, label: str) -> str:
+    normalized = value.replace("\\", "/")
+    path = Path(normalized)
+    if path.is_absolute() or ".." in path.parts or normalized.startswith(".git/") or normalized == ".git":
+        raise GACPError(f"{label} must be a repository-relative path outside .git: {value}")
+    return normalized
+
+
+def validate_iso8601(value: str, label: str) -> None:
+    try:
+        dt.datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError as exc:
+        raise GACPError(f"{label} must be ISO-8601: {value}") from exc
+
+
+def validate_manifest(data: dict[str, Any]) -> None:
+    if data.get("protocol") != "GACP":
+        raise GACPError("protocol must be GACP")
+    require_text(data, "manifest_version")
+    require_text(data, "operation_id")
+    validate_iso8601(require_text(data, "created_at"), "created_at")
+    require_text(data, "source_environment")
+
+    destination = require_object(data, "destination")
+    require_text(destination, "project", "destination")
+    repository = require_text(destination, "repository", "destination")
+    if repository.count("/") != 1 or repository.startswith("/") or repository.endswith("/"):
+        raise GACPError("destination.repository must be owner/name")
+    local_path = Path(require_text(destination, "local_path", "destination"))
+    if not local_path.is_absolute():
+        raise GACPError("destination.local_path must be absolute")
+    require_text(destination, "remote", "destination")
+    require_text(destination, "branch", "destination")
+    require_text(destination, "upstream", "destination")
+
+    scope = require_object(data, "scope")
+    actions = require_list(scope, "allowed_actions")
+    if not actions or any(action not in ALLOWED_ACTIONS for action in actions):
+        raise GACPError(f"scope.allowed_actions must use: {sorted(ALLOWED_ACTIONS)}")
+    allowed_paths = require_list(scope, "allowed_paths")
+    if not allowed_paths or not all(isinstance(item, str) for item in allowed_paths):
+        raise GACPError("scope.allowed_paths must contain path strings")
+    for index, path in enumerate(allowed_paths):
+        validate_relative_path(path, f"scope.allowed_paths[{index}]")
+    excluded_paths = require_list(scope, "excluded_paths")
+    for index, path in enumerate(excluded_paths):
+        if not isinstance(path, str):
+            raise GACPError(f"scope.excluded_paths[{index}] must be a string")
+        validate_relative_path(path, f"scope.excluded_paths[{index}]")
+    base_commit = require_text(scope, "base_commit", "scope")
+    if not COMMIT_RE.fullmatch(base_commit):
+        raise GACPError("scope.base_commit must be a full 40-character lowercase commit SHA")
+
+    artifacts = require_list(data, "artifacts")
+    for index, item in enumerate(artifacts):
+        if not isinstance(item, dict):
+            raise GACPError(f"artifacts[{index}] must be an object")
+        path = validate_relative_path(require_text(item, "path", f"artifacts[{index}]"), f"artifacts[{index}].path")
+        require_text(item, "role", f"artifacts[{index}]")
+        mode = require_text(item, "integration_mode", f"artifacts[{index}]")
+        if mode not in INTEGRATION_MODES:
+            raise GACPError(f"artifacts[{index}].integration_mode is invalid")
+        destination_path = require_text(item, "destination_path", f"artifacts[{index}]")
+        if destination_path not in {"handoff-only", "pending-repository-inspection"}:
+            validate_relative_path(destination_path, f"artifacts[{index}].destination_path")
+        require_text(item, "media_type", f"artifacts[{index}]")
+        if not isinstance(item.get("bytes"), int) or item["bytes"] < 0:
+            raise GACPError(f"artifacts[{index}].bytes must be a non-negative integer")
+        if not SHA256_RE.fullmatch(str(item.get("sha256", ""))):
+            raise GACPError(f"artifacts[{index}].sha256 is invalid")
+        require_text(item, "approval_status", f"artifacts[{index}]")
+        require_text(item, "approval_reference", f"artifacts[{index}]")
+        dependencies = item.get("dependencies")
+        if not isinstance(dependencies, list) or not all(isinstance(value, str) for value in dependencies):
+            raise GACPError(f"artifacts[{index}].dependencies must be an array of strings")
+        if path in {"handoff-only", "pending-repository-inspection"}:
+            raise GACPError(f"artifacts[{index}].path must identify a file")
+
+    sensitivity = require_object(data, "sensitivity")
+    classification = require_text(sensitivity, "classification", "sensitivity")
+    if classification not in SENSITIVITY:
+        raise GACPError(f"sensitivity.classification must use: {sorted(SENSITIVITY)}")
+    if not isinstance(sensitivity.get("public_repository"), bool):
+        raise GACPError("sensitivity.public_repository must be boolean")
+    if not isinstance(sensitivity.get("publication_authorized"), bool):
+        raise GACPError("sensitivity.publication_authorized must be boolean")
+
+    validation = require_object(data, "validation")
+    if not isinstance(validation.get("require_clean_tracked"), bool):
+        raise GACPError("validation.require_clean_tracked must be boolean")
+    allow_untracked = require_list(validation, "allow_untracked_paths")
+    for index, path in enumerate(allow_untracked):
+        if not isinstance(path, str):
+            raise GACPError(f"validation.allow_untracked_paths[{index}] must be a string")
+        validate_relative_path(path, f"validation.allow_untracked_paths[{index}]")
+    protected = require_list(validation, "protected_files")
+    for index, item in enumerate(protected):
+        if not isinstance(item, dict):
+            raise GACPError(f"validation.protected_files[{index}] must be an object")
+        validate_relative_path(require_text(item, "path", f"validation.protected_files[{index}]"), f"validation.protected_files[{index}].path")
+        if not SHA256_RE.fullmatch(str(item.get("sha256", ""))):
+            raise GACPError(f"validation.protected_files[{index}].sha256 is invalid")
+
+    authorization = require_object(data, "authorization")
+    if not isinstance(authorization.get("start_authorized"), bool):
+        raise GACPError("authorization.start_authorized must be boolean")
+    require_text(authorization, "authorized_by", "authorization")
+    require_text(authorization, "approval_reference", "authorization")
+    gate = require_text(authorization, "current_gate", "authorization")
+    if gate not in GATES:
+        raise GACPError(f"authorization.current_gate must use: {sorted(GATES)}")
+
+    result = require_object(data, "result")
+    validate_relative_path(require_text(result, "receipt_path", "result"), "result.receipt_path")
+
+    if not authorization["start_authorized"]:
+        raise GACPError("start authorization is not granted")
+    if "push" in actions and not sensitivity["publication_authorized"]:
+        raise GACPError("push is allowed but publication authorization is false")
+
+
+def normalize_repository_url(url: str) -> str:
+    value = url.strip()
+    if value.startswith("git@") and ":" in value:
+        value = value.split(":", 1)[1]
+    elif "://" in value:
+        value = value.split("://", 1)[1]
+        if "@" in value.split("/", 1)[0]:
+            value = value.split("@", 1)[1]
+        value = value.split("/", 1)[1] if "/" in value else value
+    return value.removesuffix(".git").strip("/")
+
+
+def sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def matches(path: str, patterns: Iterable[str]) -> bool:
+    normalized = path.replace("\\", "/")
+    for pattern in patterns:
+        candidate = pattern.replace("\\", "/").rstrip("/")
+        if normalized == candidate or normalized.startswith(candidate + "/") or fnmatch.fnmatch(normalized, candidate):
+            return True
+    return False
+
+
+def verify_text_format(path: Path) -> None:
+    content = path.read_bytes()
+    try:
+        content.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise GACPError(f"not UTF-8: {path}") from exc
+    if b"\r" in content:
+        raise GACPError(f"CR/CRLF line ending detected: {path}")
+    if content and not content.endswith(b"\n"):
+        raise GACPError(f"missing final newline: {path}")
+
+
+def scan_public_safety(paths: Iterable[Path]) -> list[str]:
+    findings: list[str] = []
+    for path in sorted(set(paths)):
+        if not path.is_file() or path.stat().st_size > 5 * 1024 * 1024:
+            continue
+        content = path.read_bytes()
+        for rule, pattern in SECRET_PATTERNS.items():
+            if pattern.search(content):
+                findings.append(f"{path}:{rule}")
+    return findings
+
+
+def changed_paths(repo: Path, base_commit: str) -> list[str]:
+    paths = set(git_lines(repo, "diff", "--name-only", f"{base_commit}..HEAD", "--"))
+    paths.update(git_lines(repo, "diff", "--name-only", "--"))
+    paths.update(git_lines(repo, "diff", "--cached", "--name-only", "--"))
+    paths.update(git_lines(repo, "ls-files", "--others", "--exclude-standard"))
+    return sorted(paths)
+
+
+def verify_artifacts(repo: Path, manifest: dict[str, Any]) -> list[str]:
+    checked: list[str] = []
+    for artifact in manifest["artifacts"]:
+        relative = artifact["path"]
+        path = repo / relative
+        if not path.is_file():
+            raise GACPError(f"approved artifact is missing: {relative}")
+        actual_bytes = path.stat().st_size
+        if actual_bytes != artifact["bytes"]:
+            raise GACPError(f"artifact byte mismatch: {relative} expected {artifact['bytes']} got {actual_bytes}")
+        actual_hash = sha256_file(path)
+        if actual_hash != artifact["sha256"]:
+            raise GACPError(f"artifact SHA-256 mismatch: {relative}")
+        if artifact["media_type"].startswith("text/") or path.suffix in {".md", ".json", ".yaml", ".yml"}:
+            verify_text_format(path)
+        checked.append(relative)
+    return checked
+
+
+def preflight(repo: Path, manifest: dict[str, Any]) -> dict[str, Any]:
+    destination = manifest["destination"]
+    scope = manifest["scope"]
+    validation = manifest["validation"]
+
+    if Path(destination["local_path"]).resolve() != repo:
+        raise GACPError(f"local path mismatch: expected {destination['local_path']} got {repo}")
+    branch = run_git(repo, "branch", "--show-current")
+    if branch != destination["branch"]:
+        raise GACPError(f"branch mismatch: expected {destination['branch']} got {branch}")
+    upstream = run_git(repo, "rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{upstream}")
+    if upstream != destination["upstream"]:
+        raise GACPError(f"upstream mismatch: expected {destination['upstream']} got {upstream}")
+    remote_url = run_git(repo, "remote", "get-url", destination["remote"])
+    actual_repository = normalize_repository_url(remote_url)
+    if actual_repository != destination["repository"]:
+        raise GACPError(f"repository mismatch: expected {destination['repository']} got {actual_repository}")
+    if subprocess.run(
+        ["git", "merge-base", "--is-ancestor", scope["base_commit"], "HEAD"], cwd=repo, check=False
+    ).returncode != 0:
+        raise GACPError("base commit is not an ancestor of HEAD")
+
+    if validation["require_clean_tracked"]:
+        tracked = sorted(set(git_lines(repo, "diff", "--name-only", "--") + git_lines(repo, "diff", "--cached", "--name-only", "--")))
+        if tracked:
+            raise GACPError(f"tracked worktree/index changes present: {', '.join(tracked)}")
+
+    untracked = git_lines(repo, "ls-files", "--others", "--exclude-standard")
+    unexpected_untracked = [path for path in untracked if not matches(path, validation["allow_untracked_paths"])]
+    if unexpected_untracked:
+        raise GACPError(f"unexpected untracked paths: {', '.join(unexpected_untracked)}")
+
+    protected_evidence = []
+    for item in validation["protected_files"]:
+        path = repo / item["path"]
+        if not path.is_file():
+            raise GACPError(f"protected file missing: {item['path']}")
+        actual = sha256_file(path)
+        if actual != item["sha256"]:
+            raise GACPError(f"protected file SHA-256 mismatch: {item['path']}")
+        protected_evidence.append({"path": item["path"], "sha256": actual})
+
+    artifact_paths = verify_artifacts(repo, manifest)
+    safety_findings = scan_public_safety(repo / path for path in artifact_paths)
+    if safety_findings:
+        raise GACPError("public-safety scan failed: " + ", ".join(safety_findings))
+
+    return {
+        "repository": destination["repository"],
+        "branch": branch,
+        "upstream": upstream,
+        "head": run_git(repo, "rev-parse", "HEAD"),
+        "base_commit": scope["base_commit"],
+        "protected_files": protected_evidence,
+        "artifacts": artifact_paths,
+        "untracked_allowed": untracked,
+    }
+
+
+def verify_scope(repo: Path, manifest: dict[str, Any]) -> dict[str, Any]:
+    scope = manifest["scope"]
+    paths = changed_paths(repo, scope["base_commit"])
+    excluded = [path for path in paths if matches(path, scope["excluded_paths"])]
+    if excluded:
+        raise GACPError(f"excluded paths changed: {', '.join(excluded)}")
+    unexpected = [path for path in paths if not matches(path, scope["allowed_paths"])]
+    if unexpected:
+        raise GACPError(f"out-of-scope paths changed: {', '.join(unexpected)}")
+    existing = [repo / path for path in paths if (repo / path).is_file()]
+    findings = scan_public_safety(existing)
+    if findings:
+        raise GACPError("public-safety scan failed: " + ", ".join(findings))
+    return {
+        "base_commit": scope["base_commit"],
+        "head": run_git(repo, "rev-parse", "HEAD"),
+        "changed_files": paths,
+        "public_safety": "PASS",
+        "scope": "PASS",
+    }
+
+
+def validate_receipt(data: dict[str, Any]) -> None:
+    if data.get("protocol") != "GACP":
+        raise GACPError("receipt protocol must be GACP")
+    require_text(data, "receipt_version")
+    require_text(data, "operation_id")
+    validate_iso8601(require_text(data, "created_at"), "created_at")
+    require_text(data, "manifest_path")
+    status = require_text(data, "status")
+    if status not in {"PASS", "STOP", "FAIL"}:
+        raise GACPError("receipt status must be PASS, STOP, or FAIL")
+    repository = require_object(data, "repository")
+    require_text(repository, "name", "repository")
+    require_text(repository, "branch", "repository")
+    require_text(repository, "base_commit", "repository")
+    implementation_commit = require_text(repository, "implementation_commit", "repository")
+    if implementation_commit != "containing-commit" and not COMMIT_RE.fullmatch(implementation_commit):
+        raise GACPError("repository.implementation_commit must be a full commit or containing-commit")
+    require_list(data, "implemented")
+    require_list(data, "changed_files")
+    require_list(data, "validation")
+    require_list(data, "exceptions")
+    if not isinstance(data.get("ready_for_real_migration"), bool):
+        raise GACPError("ready_for_real_migration must be boolean")
+    require_text(data, "next_gate")
+
+
+def json_output(value: dict[str, Any]) -> None:
+    print(json.dumps(value, indent=2, sort_keys=True))
+
+
+def command_validate_manifest(args: argparse.Namespace) -> None:
+    manifest = load_json(Path(args.manifest).resolve())
+    validate_manifest(manifest)
+    json_output({"command": "validate-manifest", "manifest": str(Path(args.manifest)), "status": "PASS"})
+
+
+def command_preflight(args: argparse.Namespace) -> None:
+    repo = repository_root()
+    manifest = load_json(Path(args.manifest).resolve())
+    validate_manifest(manifest)
+    evidence = preflight(repo, manifest)
+    json_output({"command": "preflight", "status": "PASS", "evidence": evidence})
+
+
+def command_verify(args: argparse.Namespace) -> None:
+    repo = repository_root()
+    manifest = load_json(Path(args.manifest).resolve())
+    validate_manifest(manifest)
+    evidence = verify_scope(repo, manifest)
+    json_output({"command": "verify", "status": "PASS", "evidence": evidence})
+
+
+def command_run(args: argparse.Namespace) -> None:
+    repo = repository_root()
+    manifest_path = Path(args.manifest).resolve()
+    manifest = load_json(manifest_path)
+    validate_manifest(manifest)
+    preflight_evidence = preflight(repo, manifest)
+    scope_evidence = verify_scope(repo, manifest)
+    receipt_path = os.path.relpath(manifest_path, repo).replace("\\", "/")
+    receipt = {
+        "protocol": "GACP",
+        "receipt_version": "1.0",
+        "operation_id": manifest["operation_id"],
+        "created_at": dt.datetime.now(dt.timezone.utc).isoformat().replace("+00:00", "Z"),
+        "manifest_path": receipt_path,
+        "status": "PASS",
+        "repository": {
+            "name": manifest["destination"]["repository"],
+            "branch": preflight_evidence["branch"],
+            "base_commit": manifest["scope"]["base_commit"],
+            "implementation_commit": preflight_evidence["head"],
+        },
+        "implemented": [
+            "manifest validation",
+            "repository and artifact preflight",
+            "changed-path scope verification",
+            "public-safety screening",
+        ],
+        "changed_files": scope_evidence["changed_files"],
+        "validation": [
+            {"name": "manifest", "status": "PASS"},
+            {"name": "preflight", "status": "PASS"},
+            {"name": "scope", "status": "PASS"},
+            {"name": "public-safety", "status": "PASS"},
+        ],
+        "publication": {
+            "implementation_push": "not-performed-by-run",
+            "receipt_publication": "not-requested" if not args.receipt else "pending",
+        },
+        "exceptions": [],
+        "ready_for_real_migration": True,
+        "preflight": preflight_evidence,
+        "scope": scope_evidence,
+        "next_gate": manifest["authorization"]["current_gate"],
+    }
+    if args.receipt:
+        output = Path(args.receipt).resolve()
+        relative = os.path.relpath(output, repo).replace("\\", "/")
+        if relative.startswith("../") or not matches(relative, manifest["scope"]["allowed_paths"]):
+            raise GACPError(f"receipt output is outside authorized paths: {relative}")
+        if output.exists():
+            raise GACPError(f"receipt output already exists: {relative}")
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\n", encoding="utf-8", newline="\n")
+        json_output({"command": "run", "status": "PASS", "receipt": relative})
+    else:
+        json_output(receipt)
+
+
+def command_validate_receipt(args: argparse.Namespace) -> None:
+    data = load_json(Path(args.receipt).resolve())
+    validate_receipt(data)
+    json_output({"command": "validate-receipt", "receipt": str(Path(args.receipt)), "status": "PASS"})
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(prog="gacp", description=__doc__)
+    parser.add_argument("--version", action="version", version=f"%(prog)s {VERSION}")
+    subparsers = parser.add_subparsers(dest="command", required=True)
+
+    validate_parser = subparsers.add_parser("validate-manifest", help="validate a GACP operation manifest")
+    validate_parser.add_argument("manifest")
+    validate_parser.set_defaults(func=command_validate_manifest)
+
+    preflight_parser = subparsers.add_parser("preflight", help="run read-only repository and artifact gates")
+    preflight_parser.add_argument("manifest")
+    preflight_parser.set_defaults(func=command_preflight)
+
+    verify_parser = subparsers.add_parser("verify", help="verify changed paths and public-safety scope")
+    verify_parser.add_argument("manifest")
+    verify_parser.set_defaults(func=command_verify)
+
+    run_parser = subparsers.add_parser("run", help="run the compact validation path and optionally write a receipt")
+    run_parser.add_argument("manifest")
+    run_parser.add_argument("--receipt")
+    run_parser.set_defaults(func=command_run)
+
+    receipt_parser = subparsers.add_parser("validate-receipt", help="validate a governed Codex result/receipt")
+    receipt_parser.add_argument("receipt")
+    receipt_parser.set_defaults(func=command_validate_receipt)
+    return parser
+
+
+def main() -> int:
+    try:
+        args = build_parser().parse_args()
+        args.func(args)
+        return 0
+    except GACPError as exc:
+        print(f"GACP STOP: {exc}", file=sys.stderr)
+        return 2
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

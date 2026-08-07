@@ -1,0 +1,86 @@
+{
+  "protocol": "GACP",
+  "manifest_version": "1.0",
+  "operation_id": "gacp-minimum-operational-kit-2026-08-07",
+  "created_at": "2026-08-07T14:52:29-07:00",
+  "source_environment": "ChatGPT governed handoff",
+  "destination": {
+    "project": "Governed Artifact Continuity Protocol",
+    "repository": "blainesmith33/governed_artifact_continuity_protocol",
+    "local_path": "/media/kimberly/320GB/governed_artifact_continuity_protocol",
+    "remote": "origin",
+    "branch": "gacp/new-chat-handoff-automation-framework-20260803",
+    "upstream": "origin/gacp/new-chat-handoff-automation-framework-20260803"
+  },
+  "scope": {
+    "allowed_actions": [
+      "inspect",
+      "validate",
+      "generate",
+      "write",
+      "stage",
+      "commit",
+      "push"
+    ],
+    "allowed_paths": [
+      "AGENTS.md",
+      "GACP_File_First_Governed_Handoff_Workflow.md",
+      "bin/gacp",
+      "templates/gacp_operation_manifest.template.json",
+      "templates/gacp_codex_result_receipt.template.json",
+      "operations/2026-08-07/minimum-operational-kit.json",
+      "tests/test_gacp.py",
+      "handoffs/codex/2026-08-07/GACP_Minimum_Operational_Kit_Implementation_Result_2026-08-07.json"
+    ],
+    "excluded_paths": [
+      "archives",
+      "proofs",
+      "handoffs/chatgpt",
+      "README.md",
+      "governed_artifact_continuity_protocol_description.md"
+    ],
+    "base_commit": "96a7b79106a1488346499fb91e3bb7676b0e516b"
+  },
+  "artifacts": [
+    {
+      "path": "GACP_File_First_Governed_Handoff_Workflow.md",
+      "role": "owner-approved operating baseline",
+      "integration_mode": "exact-content",
+      "destination_path": "GACP_File_First_Governed_Handoff_Workflow.md",
+      "media_type": "text/markdown",
+      "bytes": 16822,
+      "sha256": "6c59fbc2f49786a9a3bd3499256332950fd1639269f40770ae12fd0b04c33458",
+      "approval_status": "approved",
+      "approval_reference": "handoffs/chatgpt/2026-08-07/GACP_Minimum_Operational_Kit_Implementation_Handoff_2026-08-07.md",
+      "dependencies": [
+        "AGENTS.md"
+      ]
+    }
+  ],
+  "sensitivity": {
+    "classification": "public",
+    "public_repository": true,
+    "publication_authorized": true
+  },
+  "validation": {
+    "require_clean_tracked": true,
+    "allow_untracked_paths": [
+      "GACP_File_First_Governed_Handoff_Workflow.md"
+    ],
+    "protected_files": [
+      {
+        "path": "GACP_File_First_Governed_Handoff_Workflow.md",
+        "sha256": "6c59fbc2f49786a9a3bd3499256332950fd1639269f40770ae12fd0b04c33458"
+      }
+    ]
+  },
+  "authorization": {
+    "start_authorized": true,
+    "authorized_by": "owner",
+    "approval_reference": "handoffs/chatgpt/2026-08-07/GACP_Minimum_Operational_Kit_Implementation_Handoff_2026-08-07.md",
+    "current_gate": "acceptance"
+  },
+  "result": {
+    "receipt_path": "handoffs/codex/2026-08-07/GACP_Minimum_Operational_Kit_Implementation_Result_2026-08-07.json"
+  }
+}

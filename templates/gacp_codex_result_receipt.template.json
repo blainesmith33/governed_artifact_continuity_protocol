@@ -1,0 +1,24 @@
+{
+  "protocol": "GACP",
+  "receipt_version": "1.0",
+  "operation_id": "REQUIRED",
+  "created_at": "REQUIRED_ISO_8601",
+  "manifest_path": "REQUIRED",
+  "status": "PASS",
+  "repository": {
+    "name": "REQUIRED_OWNER/REQUIRED_REPOSITORY",
+    "branch": "REQUIRED",
+    "base_commit": "REQUIRED_FULL_40_CHARACTER_COMMIT",
+    "implementation_commit": "containing-commit"
+  },
+  "implemented": [],
+  "changed_files": [],
+  "validation": [],
+  "publication": {
+    "implementation_push": "pending",
+    "receipt_publication": "commit-containing-this-receipt"
+  },
+  "exceptions": [],
+  "ready_for_real_migration": false,
+  "next_gate": "acceptance"
+}
