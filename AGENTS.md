@@ -71,6 +71,32 @@ Stop for owner authority when required by the governing operation, including:
 
 Execution-environment permission prompts are capability boundaries, not GACP governance approvals. Never bypass them or misrepresent them as owner decisions.
 
+## Mandatory owner-facing reporting
+
+Meaningful human oversight requires concise interpretation, not manual artifact relay.
+
+For any governed job delegated to Codex or another cooperating agent:
+
+1. Before execution, the owner-facing coordinating agent must give the owner a concise plain-English summary of what the delegated agent is being asked to accomplish. Keep the substantive technical/governed handoff in Git.
+2. After the delegated agent returns, retrieve the authoritative result and relevant evidence from Git rather than relying only on its conversational completion receipt.
+3. Provide the owner an evidence-based summary covering, as applicable:
+   - what the delegated agent found;
+   - what it actually did;
+   - what it recommends;
+   - the coordinating agent's independent assessment;
+   - what the coordinating agent agrees with and why;
+   - what the coordinating agent disagrees with or believes needs correction;
+   - validation results and current project state;
+   - what happens next;
+   - any genuine owner decision required, with enough context for an informed decision.
+4. Treat an agent-reported `PASS` as evidence to review, not as a substitute for independent assessment when substantive acceptance or an owner decision is involved.
+5. Do not turn the owner-facing summary into the durable inter-agent transport. Git remains authoritative for substantive state and evidence.
+6. Do not require the owner to paste or relay the full result between agents when it is retrievable from Git.
+
+The provenance and rationale for this requirement are recorded in:
+
+`handoffs/chatgpt/2026-08-07/GACP_Owner_Facing_Reporting_Governance_Amendment_2026-08-07.md`
+
 ## Preserve established work
 
 Do not:
