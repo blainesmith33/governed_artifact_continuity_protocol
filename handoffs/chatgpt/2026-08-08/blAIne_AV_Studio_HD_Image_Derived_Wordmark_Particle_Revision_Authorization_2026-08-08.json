@@ -1,0 +1,82 @@
+{
+  "protocol": "GACP",
+  "schema_version": "1.0",
+  "handoff_id": "blaine-av-studio-hd-image-derived-wordmark-particle-revision-2026-08-08",
+  "created_at": "2026-08-08",
+  "source_environment": "ChatGPT owner-facing coordination",
+  "authorization": {
+    "status": "owner-authorized",
+    "basis": "The owner supplied the exact local source path after requesting continued step-by-step implementation toward a usable HD particle studio.",
+    "owner_source_asset_path": "/home/deck/Pictures/Screenshots/blAIne.png",
+    "prior_visual_review_commit": "608323c11a21163d9cf1e165cfa4b6bb0577e404",
+    "prior_proof_result_commit": "4040934e152351c45d5b2cf6bc1b53a310b22c5e"
+  },
+  "destination": {
+    "repository": "blainesmith33/blAIne_av_studio",
+    "authoritative_main_baseline": "790798904db67391961644504cb98468d060782f",
+    "prior_proof_branch": "gacp/blaine-av-studio-visible-wordmark-particle-proof-20260808",
+    "prior_proof_commit": "1c218588b17bdf41307b69f821f8a079d029e27f",
+    "implementation_branch": "gacp/blaine-av-studio-hd-wordmark-particle-revision-20260808",
+    "merge_to_main_authorized": false
+  },
+  "objective": "Revise the successful but visually coarse particle proof into a faithful, high-density, image-derived blAIne wordmark effect suitable for native Steam Deck review and HD production-oriented output.",
+  "required_preflight": [
+    "Read the complete GACP and target-repository AGENTS.md files and applicable governing baselines.",
+    "Verify repository identity, remote state, authoritative main baseline, prior proof commit, and clean/allowed worktree state.",
+    "Verify that /home/deck/Pictures/Screenshots/blAIne.png exists, is a readable PNG, and record its byte count, pixel dimensions, color/alpha characteristics, and SHA-256 digest.",
+    "Stop without implementation if the source asset is missing, unreadable, not the intended blAIne artwork, or materially inconsistent with the approved visual target.",
+    "Use the prior proof commit as the reusable implementation baseline only where consistent with this revision; preserve main unchanged."
+  ],
+  "authorized_scope": [
+    "Create the governed revision branch without rewriting or deleting the prior proof branch.",
+    "Copy the verified owner-provided PNG into an appropriate tracked reference-asset path on the revision branch and record its provenance and SHA-256 digest.",
+    "Replace the provisional 35x7 hand-authored wordmark mask with deterministic targets derived from the actual PNG pixels, including source color and opacity.",
+    "Implement literal one-particle-per-meaningful-visible-pixel mode and at least one adaptive-density mode.",
+    "Use resolution-independent normalized target coordinates and aspect-ratio-preserving placement.",
+    "Present at native Steam Deck 1280x800 drawable resolution by default and respond correctly to actual framebuffer size and window resizing.",
+    "Support a minimum 1920x1080 production-oriented render or deterministic frame capture path without changing the artwork proportions.",
+    "Render particles efficiently in batches or another demonstrably scalable method; do not issue an independent heavyweight draw submission per particle.",
+    "Use smooth particle primitives with appropriate opacity/anti-aliasing and preserve pale white/gray outer letters plus cyan/blue AI coloration.",
+    "Implement a bounded glow treatment for the blue AI region without allowing glow to destroy wordmark legibility.",
+    "Preserve deterministic scatter-to-assembly motion, assembled hold, restart, and exit behavior.",
+    "Provide a simple way to switch or launch literal and adaptive-density modes for owner comparison.",
+    "Add focused tests for image decoding/mask extraction, deterministic target generation, coordinate scaling, density selection, and any CPU-to-render-data conversion introduced.",
+    "Update only minimal build and usage documentation needed for this slice.",
+    "Capture review evidence at 1280x800 for both literal and adaptive-density assembled states and at least one 1920x1080 deterministic output.",
+    "Measure and record particle counts, frame behavior/performance on the Steam Deck, commands run, validation results, changed files, and remote synchronization."
+  ],
+  "visual_acceptance_requirements": [
+    "The assembled result must be immediately recognizable as the supplied blAIne artwork, preserving its actual contours, proportions, spacing, and stylized letterforms.",
+    "The result must not be an enlarged low-resolution grid, generic font substitute, hand-authored approximation, or claim of per-pixel representation when source pixels were not actually used.",
+    "Literal mode must create one target particle for each defined meaningful visible source pixel under a documented alpha rule; any deliberate transparent/background exclusion must be deterministic and reported.",
+    "Adaptive mode must retain the same recognizable silhouette while making particle density adjustable or explicitly selectable.",
+    "Native 1280x800 evidence must show the full intended wordmark without clipping, missing regions caused by incorrect scaling, or reliance on a 960x540-only surface.",
+    "Build/test PASS alone is insufficient; final visual acceptance remains an owner decision after evidence and runtime review."
+  ],
+  "exclusions": [
+    "No merge into main.",
+    "No deletion or rewriting of the earlier dot-matrix proof.",
+    "No general-purpose editor, timeline editor, audio system, audio reactivity, export pipeline, AI tooling, networking, asset-library architecture, GPU particle simulation, or broad renderer redesign.",
+    "No unrelated cleanup, dependency expansion, or architecture work.",
+    "No claim that 4K real-time performance is established.",
+    "No final substantive acceptance on behalf of the owner."
+  ],
+  "validation_and_result": [
+    "Perform clean configure/build and all repository tests.",
+    "Repeat deterministic tests and target generation sufficiently to prove stable results.",
+    "Run the demo in the Steam Deck graphical environment at 1280x800 in both required density modes.",
+    "Generate and inspect the required native and 1080p evidence captures.",
+    "Validate changed-file scope, git diff --check, branch publication, and local/remote commit identity.",
+    "Publish a durable GACP result receipt with asset digest/dimensions, implementation commit and branch, exact changed files, particle counts by mode, test/runtime/performance evidence, screenshot paths or durable evidence references, limitations, blockers, and the next owner visual-review gate.",
+    "Stop after branch publication and GACP result publication; do not merge."
+  ],
+  "stop_conditions": [
+    "Required source asset cannot be verified.",
+    "Required implementation would materially exceed the authorized scope.",
+    "The implementation cannot produce source-derived targets or native 1280x800 evidence.",
+    "Validation fails or repository state differs materially from the declared baseline.",
+    "An unexpected sensitive, licensing, or publication concern is detected.",
+    "Any merge, destructive action, or new architectural decision becomes necessary."
+  ],
+  "next_gate": "Owner visual review and acceptance, revision, or rejection of the HD image-derived result. Merge requires separate explicit authorization."
+}
