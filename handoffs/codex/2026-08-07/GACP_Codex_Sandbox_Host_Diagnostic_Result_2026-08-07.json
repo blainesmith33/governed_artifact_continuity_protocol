@@ -1,0 +1,130 @@
+{
+  "protocol": "GACP",
+  "receipt_version": "1.0",
+  "operation_id": "gacp-codex-sandbox-host-diagnostic-2026-08-07",
+  "created_at": "2026-08-07T18:55:47-07:00",
+  "governing_handoff_commit": "564f79e05e5b6a94d116d64c011f73510e0aad48",
+  "status": "PASS",
+  "diagnostic_conclusion": "root-cause-established",
+  "existing_acceptance_status": "FAIL-BLOCKED",
+  "ready_for_real_migration": false,
+  "host_changes_performed": [],
+  "host": {
+    "distribution": "Ubuntu",
+    "release": "24.04.4 LTS",
+    "kernel": "6.17.0-35-generic",
+    "architecture": "x86_64"
+  },
+  "codex": {
+    "version": "0.147.0",
+    "resolved_bwrap": "/usr/bin/bwrap"
+  },
+  "packages": {
+    "bubblewrap": {
+      "installed": true,
+      "version": "0.9.0-1ubuntu0.1"
+    },
+    "apparmor": {
+      "installed": true,
+      "version": "4.0.1really4.0.1-0ubuntu0.24.04.7"
+    },
+    "apparmor-profiles": {
+      "installed": false,
+      "candidate_available": true
+    },
+    "apparmor-utils": {
+      "installed": false,
+      "candidate_available": true
+    },
+    "apparmor_parser": {
+      "present": true,
+      "version": "4.0.1"
+    }
+  },
+  "apparmor": {
+    "enabled": true,
+    "service_active": true,
+    "current_process_label": "unconfined",
+    "bwrap_profile_etc_path_present": false,
+    "bwrap_profile_package_source_present": false,
+    "loaded_profile_directly_readable": false,
+    "audit_profile_observed": "unprivileged_userns",
+    "audit_denials": [
+      "capability:setpcap",
+      "capability:net_admin",
+      "write:/proc/<pid>/uid_map"
+    ]
+  },
+  "namespace_controls": {
+    "kernel.apparmor_restrict_unprivileged_userns": 1,
+    "kernel.unprivileged_userns_clone": 1,
+    "user.max_user_namespaces": 29345
+  },
+  "reproduction": [
+    {
+      "probe": "minimal-bwrap-user-namespace",
+      "status": "FAIL",
+      "error": "bwrap: setting up uid map: Permission denied"
+    },
+    {
+      "probe": "minimal-bwrap-user-network-namespace",
+      "status": "FAIL",
+      "error": "bwrap: loopback: Failed RTM_NEWADDR: Operation not permitted"
+    },
+    {
+      "probe": "minimal-unshare-user-namespace",
+      "status": "FAIL",
+      "error": "unshare: write failed /proc/self/uid_map: Operation not permitted"
+    },
+    {
+      "probe": "codex-sandbox-linux",
+      "status": "FAIL",
+      "error": "bwrap: loopback: Failed RTM_NEWADDR: Operation not permitted"
+    }
+  ],
+  "root_cause": {
+    "classification": "ubuntu-24.04-apparmor-bwrap-profile-missing",
+    "matches_official_openai_case": true,
+    "official_reference": "https://learn.chatgpt.com/docs/sandboxing",
+    "confidence": "established"
+  },
+  "recommended_remediation": {
+    "authorized": false,
+    "least_privilege": true,
+    "requires_owner_action": true,
+    "requires_sudo": true,
+    "changes": [
+      "refresh apt package metadata",
+      "install apparmor-profiles and apparmor-utils",
+      "copy packaged bwrap-userns-restrict profile to /etc/apparmor.d/",
+      "load only bwrap-userns-restrict with apparmor_parser"
+    ],
+    "global_userns_restriction_disable_recommended": false
+  },
+  "security": {
+    "preserves_global_apparmor_userns_restriction": true,
+    "rollback": [
+      "remove the loaded bwrap-userns-restrict profile with apparmor_parser",
+      "remove the copied /etc/apparmor.d/bwrap-userns-restrict file"
+    ]
+  },
+  "adapter": {
+    "code_change_required": false,
+    "config_change_required": false
+  },
+  "acceptance": {
+    "existing_harness_rerun_expected_sufficient": true,
+    "preconditions": [
+      "minimal bwrap probes pass",
+      "Codex Linux sandbox probe passes"
+    ],
+    "readiness_may_change_only_after_full_pass": true
+  },
+  "publication": {
+    "branch": "gacp/codex-execution-automation-corrective-20260807",
+    "commit": "containing-commit",
+    "normal_push_authorized": true,
+    "merge_authorized": false
+  },
+  "next_gate": "owner-host-remediation-approval"
+}
