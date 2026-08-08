@@ -71,6 +71,31 @@ Stop for owner authority when required by the governing operation, including:
 
 Execution-environment permission prompts are capability boundaries, not GACP governance approvals. Never bypass them or misrepresent them as owner decisions.
 
+## Codex execution adapter
+
+For repeatable cross-repository execution, use the dedicated user-scope profile managed by
+`bin/gacp-codex-profile`. It overlays the user's existing Codex configuration without editing the
+base `config.toml`, adds this GACP repository as a workspace root, preserves protected metadata
+boundaries, enables only a narrow GitHub network allowlist, and routes eligible technical escalation
+requests through Codex Auto-review. It never grants governance authority or danger-full-access.
+
+One-time setup and verification:
+
+`./bin/gacp-codex-profile inspect`
+
+`./bin/gacp-codex-profile install`
+
+`./bin/gacp-codex-profile verify`
+
+Start a governed session from the target repository with `codex --profile gacp` or
+`codex exec --profile gacp`. Disable or restore the adapter with
+`./bin/gacp-codex-profile disable` and `./bin/gacp-codex-profile enable`.
+
+The profile carries machine-local paths only in its private user-scope file. Public manifests use
+`runtime-repository-root`, bound and verified by the runner at execution. A fresh session must still
+retrieve the named Git handoff, read this file, verify its authorization, and stop at genuine owner
+gates. See `docs/GACP_Codex_Execution_Adapter.md` for setup, limits, and acceptance expectations.
+
 ## Mandatory owner-facing reporting
 
 Meaningful human oversight requires concise interpretation, not manual artifact relay.
@@ -163,6 +188,7 @@ Once the minimum operational kit is present, use these repository artifacts inst
 - `templates/gacp_operation_manifest.template.json` — parameterized operation definition;
 - `templates/gacp_codex_result_receipt.template.json` — durable Codex result/receipt format;
 - `bin/gacp` — dependency-free manifest, preflight, scope, safety, exact staging, commit, normal-push, and receipt runner;
+- `bin/gacp-codex-profile` — reversible least-privilege Codex profile setup and verification;
 - `tests/` — executable read-only and disposable-Git guardrail tests.
 
 The compact entry point is:

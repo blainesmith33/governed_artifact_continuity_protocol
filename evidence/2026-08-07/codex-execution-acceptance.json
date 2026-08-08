@@ -1,0 +1,68 @@
+{
+  "blocker": "host-bubblewrap-sandbox-initialization",
+  "coverage": [
+    "inspect",
+    "edit",
+    "validate",
+    "governed-result",
+    "exact-stage",
+    "commit",
+    "normal-push",
+    "remote-ref-verification",
+    "fresh-session-rerun",
+    "idempotence"
+  ],
+  "failures": [
+    "gacp-receipt-commit-missing",
+    "gacp-scope",
+    "result-receipt",
+    "target-commit-missing",
+    "target-scope",
+    "target-validation"
+  ],
+  "fresh_sessions": 2,
+  "profile": {
+    "approval_policy": "on-request",
+    "approvals_reviewer": "auto_review",
+    "base_config_modified": false,
+    "danger_full_access": false,
+    "permission_base": ":workspace",
+    "temporary_profile_removed": true
+  },
+  "routine_manual_prompt_count": 0,
+  "scenario": "disposable-fresh-session-cross-repository",
+  "schema_version": "1.0",
+  "sessions": [
+    {
+      "duration_seconds": 79.44,
+      "event_types": [
+        "item.completed",
+        "item.started",
+        "thread.started",
+        "turn.completed",
+        "turn.started"
+      ],
+      "interactive_tty": false,
+      "manual_prompt_count": 0,
+      "returncode": 0,
+      "stdin": "DEVNULL",
+      "timed_out": false
+    },
+    {
+      "duration_seconds": 134.232,
+      "event_types": [
+        "item.completed",
+        "item.started",
+        "thread.started",
+        "turn.completed",
+        "turn.started"
+      ],
+      "interactive_tty": false,
+      "manual_prompt_count": 0,
+      "returncode": 0,
+      "stdin": "DEVNULL",
+      "timed_out": false
+    }
+  ],
+  "status": "FAIL"
+}

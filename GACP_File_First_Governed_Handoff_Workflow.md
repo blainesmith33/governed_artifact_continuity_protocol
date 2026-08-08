@@ -54,8 +54,10 @@ The human owner:
 
 - approves or rejects artifact content;
 - authorizes the intended destination and integration scope;
-- reviews any integration that required interpretation;
-- authorizes commit and publication;
+- reviews any integration that required interpretation, either as a distinct gate or through an
+  explicit bounded-phase authorization that defines the allowed interpretation and acceptance evidence;
+- authorizes commit and publication, including routine scoped commits and branch pushes when those
+  actions are expressly included in the bounded authorization;
 - resolves conflicts that cannot be decided deterministically.
 
 ### 4.2 ChatGPT authoring environment
@@ -111,7 +113,9 @@ Requirements:
 - it must identify the allowed targets, required changes, exclusions, and validation gates;
 - the local integration agent may interpret it only as necessary to apply the authorized change;
 - every resulting change must be traceable to a specific authorization in the instruction or an already-applicable repository rule;
-- the complete human-readable diff must receive owner review before commit;
+- the complete human-readable diff must receive owner review before commit unless a bounded handoff
+  already authorizes the specified interpretation, paths, validation, commit, and publication and
+  requires a durable post-execution result for acceptance;
 - ambiguity that could materially change the result is a stop condition.
 
 ### 5.3 Handoff manifest
@@ -134,8 +138,9 @@ The governed lifecycle is:
 6. Hash-verified locally.
 7. Integrated into an uncommitted repository state.
 8. Validated.
-9. Reviewed by the owner when interpretation or multi-file changes occurred.
-10. Authorized for publication.
+9. Reviewed by the owner when interpretation or multi-file changes occurred, unless the applicable
+   bounded authorization deliberately places review at the post-execution acceptance gate.
+10. Authorized for publication, either at this gate or earlier within an explicit bounded phase.
 11. Committed and pushed under repository policy.
 12. Recorded with final commit and synchronization evidence.
 
@@ -208,17 +213,32 @@ Validation must include, when applicable:
 
 ### 7.7 Owner review
 
-Owner review is mandatory before commit when:
+Owner review is always mandatory before commit when the owner or repository policy requires it.
+Otherwise it is mandatory when no explicit bounded-phase authorization covers the actual interpreted
+result and one or more of these conditions applies:
 
 - an integration instruction was interpreted;
 - existing substantive wording changed;
 - generator or template sources changed;
 - more repository files changed than the exact approved artifact files;
-- the owner or repository policy requires review.
 
-The review must use the actual uncommitted repository state. A summary alone is not sufficient when human-readable content changed.
+An explicit bounded-phase authorization may instead authorize a defined interpretation, validation,
+scoped commit, and scoped branch push while reserving final substantive acceptance to the owner.
+That authorization must identify paths, exclusions, stop conditions, required evidence, and the
+publication destination. Any scope expansion, ambiguity, validation failure, or materially different
+result restores the pre-commit owner-review gate.
 
-### 7.8 Commit and publication
+When pre-commit review is required, it must use the actual uncommitted repository state. A summary
+alone is not sufficient when human-readable content changed.
+
+### 7.8 Execution capability and governance authority
+
+Execution-environment permissions provide technical capability only. They do not approve content,
+expand a handoff, authorize publication, accept an exception, or merge a protected branch. A reusable
+execution profile may cover routine filesystem, Git, and network operations already authorized by a
+governed handoff. Genuine owner gates remain those declared by the handoff and this workflow.
+
+### 7.9 Commit and publication
 
 After approval, the integration agent must:
 
@@ -279,7 +299,7 @@ The integration agent must stop before modification, staging, commit, or push as
 - an instruction is materially ambiguous;
 - an unexpected file would need to change;
 - validation fails;
-- the staged diff differs from the owner-reviewed state;
+- the staged diff differs from the owner-reviewed or explicitly bounded authorized state;
 - publication authority is absent.
 
 A correct stop is a successful governance outcome, not a workflow failure.

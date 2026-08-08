@@ -204,6 +204,7 @@ class GovernedGitActionsTestCase(unittest.TestCase):
         receipt = json.loads(result.stdout)
         self.assertEqual(receipt["repository"]["implementation_commit"], implementation)
         self.assertEqual(receipt["publication"]["implementation_push"], "not-authorized")
+        self.assertFalse(receipt["ready_for_real_migration"])
         self.assertEqual(self.remote_head(), self.base)
 
     def test_push_and_receipt_are_verified_end_to_end(self) -> None:
@@ -226,6 +227,7 @@ class GovernedGitActionsTestCase(unittest.TestCase):
         self.assertEqual(receipt["repository"]["implementation_parent"], self.base)
         self.assertEqual(receipt["action_outcomes"]["push"], "performed-and-verified")
         self.assertEqual(receipt["publication"]["implementation_push"], f"verified:{implementation}")
+        self.assertFalse(receipt["ready_for_real_migration"])
         self.assertEqual(self.remote_head(), receipt_commit)
         self.assertEqual(command("git", "rev-parse", f"{implementation}^", cwd=self.repo).stdout.strip(), self.base)
         self.assertEqual(command("git", "rev-parse", "HEAD^", cwd=self.repo).stdout.strip(), implementation)

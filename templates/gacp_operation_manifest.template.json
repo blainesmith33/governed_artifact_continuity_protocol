@@ -7,7 +7,7 @@
   "destination": {
     "project": "REQUIRED",
     "repository": "REQUIRED_OWNER/REQUIRED_REPOSITORY",
-    "local_path": "REQUIRED_ABSOLUTE_PATH",
+    "local_path": "runtime-repository-root",
     "remote": "origin",
     "branch": "REQUIRED",
     "upstream": "origin/REQUIRED"
@@ -29,7 +29,8 @@
   "execution": {
     "commit_message": "REQUIRED",
     "receipt_commit_message": "REQUIRED",
-    "require_candidate_changes": true
+    "require_candidate_changes": true,
+    "ready_for_real_migration": false
   },
   "artifacts": [
     {
@@ -67,6 +68,7 @@
     "current_gate": "start"
   },
   "result": {
-    "receipt_path": "REQUIRED"
+    "receipt_path": "REQUIRED",
+    "summary_path": "REQUIRED"
   }
 }

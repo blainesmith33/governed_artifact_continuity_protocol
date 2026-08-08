@@ -1,0 +1,366 @@
+#!/usr/bin/env python3
+"""Install and verify the least-privilege GACP Codex execution profile."""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+from pathlib import Path
+import re
+import shutil
+import subprocess
+import sys
+import tempfile
+import tomllib
+from typing import Any
+
+
+VERSION = "0.1.0"
+MIN_CODEX_VERSION = (0, 138, 0)
+PROFILE_RE = re.compile(r"^[A-Za-z0-9_-]+$")
+MANAGED_MARKER = "# Managed by GACP Codex execution adapter v1"
+
+
+class ProfileError(RuntimeError):
+    """A safe profile-management stop."""
+
+
+def run(*args: str, cwd: Path | None = None) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        list(args),
+        cwd=cwd,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+
+
+def normalize_repository_url(url: str) -> str:
+    value = url.strip()
+    if value.startswith("git@") and ":" in value:
+        value = value.split(":", 1)[1]
+    elif "://" in value:
+        value = value.split("://", 1)[1]
+        if "@" in value.split("/", 1)[0]:
+            value = value.split("@", 1)[1]
+        value = value.split("/", 1)[1] if "/" in value else value
+    return "/".join(value.removesuffix(".git").strip("/").split("/")[-2:])
+
+
+def repository_root(value: str | None) -> Path:
+    candidate = Path(value).expanduser().resolve() if value else Path(__file__).resolve().parents[1]
+    result = run("git", "rev-parse", "--show-toplevel", cwd=candidate)
+    if result.returncode != 0:
+        raise ProfileError("the configured GACP path is not a Git repository")
+    root = Path(result.stdout.strip()).resolve()
+    if not (root / "AGENTS.md").is_file() or not (root / "bin" / "gacp").is_file():
+        raise ProfileError("the configured repository does not contain the GACP bootstrap and runner")
+    return root
+
+
+def codex_home(value: str | None) -> Path:
+    if value:
+        return Path(value).expanduser().resolve()
+    configured = os.environ.get("CODEX_HOME")
+    return Path(configured).expanduser().resolve() if configured else (Path.home() / ".codex").resolve()
+
+
+def profile_path(home: Path, name: str) -> Path:
+    return home / f"{name}.config.toml"
+
+
+def disabled_path(home: Path, name: str) -> Path:
+    return home / f"{name}.config.toml.disabled"
+
+
+def permission_name(name: str) -> str:
+    return f"{name}-workspace"
+
+
+def toml_string(value: str) -> str:
+    return json.dumps(value, ensure_ascii=False)
+
+
+def render_profile(root: Path, name: str) -> str:
+    root_text = str(root)
+    permission = permission_name(name)
+    instructions = (
+        "For every task explicitly identified as GACP-governed, before substantive action read "
+        f"{root_text}/AGENTS.md completely, retrieve the named governed handoff or operation from Git, "
+        "and follow its authority, scope, stop conditions, durable-return rules, and owner-facing reporting rules. "
+        "This execution profile supplies technical capability only; it does not grant governance authority. "
+        "A manifest or technical approval never substitutes for owner authorization. Preserve unrelated work, "
+        "use the GACP Git backend for substantive inter-agent results, never merge or use destructive Git actions "
+        "without explicit authority, and keep execution-environment approvals distinct from genuine owner gates."
+    )
+    lines = [
+        MANAGED_MARKER,
+        f"# Generated for profile {name}; activate with: codex --profile {name}",
+        "# Machine-local paths belong only in this user-scope file, never in public GACP artifacts.",
+        'approval_policy = "on-request"',
+        'approvals_reviewer = "auto_review"',
+        f"default_permissions = {toml_string(permission)}",
+        f"developer_instructions = {toml_string(instructions)}",
+        "",
+        f"[permissions.{permission}]",
+        'description = "GACP-governed workspace and Git-backend access with narrow public GitHub networking."',
+        'extends = ":workspace"',
+        "",
+        f"[permissions.{permission}.workspace_roots]",
+        f"{toml_string(root_text)} = true",
+        "",
+        f"[permissions.{permission}.filesystem]",
+        '":minimal" = "read"',
+        "glob_scan_max_depth = 3",
+        "",
+        f"[permissions.{permission}.filesystem.\":workspace_roots\"]",
+        '"." = "write"',
+        '".git" = "read"',
+        '".agents" = "read"',
+        '".codex" = "read"',
+        '"*.env" = "deny"',
+        '"*/*.env" = "deny"',
+        '"*/*/*.env" = "deny"',
+        "",
+        f"[permissions.{permission}.network]",
+        "enabled = true",
+        "",
+        f"[permissions.{permission}.network.domains]",
+        '"github.com" = "allow"',
+        '"api.github.com" = "allow"',
+        '"*.githubusercontent.com" = "allow"',
+        "",
+    ]
+    return "\n".join(lines)
+
+
+def load_toml(path: Path) -> dict[str, Any]:
+    if not path.is_file():
+        return {}
+    try:
+        return tomllib.loads(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, tomllib.TOMLDecodeError) as exc:
+        raise ProfileError(f"cannot parse existing Codex configuration: {path.name}") from exc
+
+
+def parse_version(codex_binary: str) -> tuple[int, int, int]:
+    result = run(codex_binary, "--version")
+    if result.returncode != 0:
+        raise ProfileError("Codex CLI is unavailable")
+    match = re.search(r"(\d+)\.(\d+)\.(\d+)", result.stdout + result.stderr)
+    if not match:
+        raise ProfileError("Codex CLI version could not be parsed")
+    version = tuple(int(part) for part in match.groups())
+    if version < MIN_CODEX_VERSION:
+        minimum = ".".join(str(part) for part in MIN_CODEX_VERSION)
+        raise ProfileError(f"Codex CLI {minimum} or later is required for permission profiles")
+    return version
+
+
+def compatibility(home: Path, name: str) -> dict[str, Any]:
+    base = load_toml(home / "config.toml")
+    legacy = "sandbox_mode" in base or "sandbox_workspace_write" in base
+    collision = permission_name(name) in base.get("permissions", {}) if isinstance(base.get("permissions"), dict) else False
+    return {
+        "base_config_present": (home / "config.toml").is_file(),
+        "legacy_sandbox_conflict": legacy,
+        "permission_name_collision": collision,
+        "compatible": not legacy and not collision,
+    }
+
+
+def ensure_compatible(report: dict[str, Any]) -> None:
+    if report["legacy_sandbox_conflict"]:
+        raise ProfileError(
+            "base config uses legacy sandbox settings; permission profiles do not compose with them, so no change was made"
+        )
+    if report["permission_name_collision"]:
+        raise ProfileError("base config already defines the GACP permission profile name; no change was made")
+
+
+def atomic_write(path: Path, content: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    descriptor, temporary = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
+    temp_path = Path(temporary)
+    try:
+        with os.fdopen(descriptor, "w", encoding="utf-8", newline="\n") as handle:
+            handle.write(content)
+        temp_path.chmod(0o600)
+        os.replace(temp_path, path)
+    finally:
+        if temp_path.exists():
+            temp_path.unlink()
+
+
+def managed_content(path: Path) -> str:
+    try:
+        content = path.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError) as exc:
+        raise ProfileError(f"cannot read profile file: {path.name}") from exc
+    if not content.startswith(MANAGED_MARKER + "\n"):
+        raise ProfileError(f"refusing to alter non-GACP profile file: {path.name}")
+    return content
+
+
+def public_characteristics(name: str) -> dict[str, Any]:
+    return {
+        "profile_name": name,
+        "approval_policy": "on-request",
+        "approvals_reviewer": "auto_review",
+        "permission_base": ":workspace",
+        "workspace_roots": "active target plus one configured GACP backend",
+        "protected_paths": [".git", ".agents", ".codex"],
+        "network_allowlist": ["github.com", "api.github.com", "*.githubusercontent.com"],
+        "danger_full_access": False,
+        "base_config_modified": False,
+    }
+
+
+def inspect_state(home: Path, root: Path, name: str, codex_binary: str) -> dict[str, Any]:
+    expected = render_profile(root, name)
+    target = profile_path(home, name)
+    disabled = disabled_path(home, name)
+    report = compatibility(home, name)
+    version = parse_version(codex_binary)
+    state = "absent"
+    if target.exists():
+        state = "current" if managed_content(target) == expected else "managed-drift"
+    elif disabled.exists():
+        state = "disabled" if managed_content(disabled) == expected else "disabled-managed-drift"
+    return {
+        "status": "PASS" if report["compatible"] else "STOP",
+        "profile_state": state,
+        "codex_version": ".".join(str(part) for part in version),
+        "compatibility": report,
+        "characteristics": public_characteristics(name),
+    }
+
+
+def install(home: Path, root: Path, name: str, codex_binary: str) -> dict[str, Any]:
+    parse_version(codex_binary)
+    report = compatibility(home, name)
+    ensure_compatible(report)
+    target = profile_path(home, name)
+    disabled = disabled_path(home, name)
+    expected = render_profile(root, name)
+    if disabled.exists():
+        raise ProfileError("a disabled GACP profile already exists; enable or remove it deliberately before install")
+    if target.exists():
+        current = managed_content(target)
+        if current != expected:
+            raise ProfileError("managed profile differs from the requested repository; disable it before replacement")
+        action = "already-current"
+    else:
+        atomic_write(target, expected)
+        action = "installed"
+    return {"status": "PASS", "action": action, "characteristics": public_characteristics(name)}
+
+
+def verify(home: Path, root: Path, name: str, codex_binary: str) -> dict[str, Any]:
+    state = inspect_state(home, root, name, codex_binary)
+    ensure_compatible(state["compatibility"])
+    if state["profile_state"] != "current":
+        raise ProfileError(f"profile is not active and current: {state['profile_state']}")
+    parsed = load_toml(profile_path(home, name))
+    if parsed.get("approval_policy") != "on-request" or parsed.get("approvals_reviewer") != "auto_review":
+        raise ProfileError("profile approval settings do not match the governed adapter")
+    # Profile overlays apply only to runtime commands, not to `codex doctor`.
+    # Runtime help loads and strictly validates the selected profile without starting a session.
+    command = [codex_binary, "--strict-config", "--profile", name, "exec", "--help"]
+    result = subprocess.run(
+        command,
+        env={**os.environ, "CODEX_HOME": str(home)},
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    if result.returncode != 0:
+        raise ProfileError("Codex strict configuration diagnostic failed")
+    return {
+        "status": "PASS",
+        "profile_state": "current",
+        "strict_config": "PASS",
+        "characteristics": public_characteristics(name),
+    }
+
+
+def disable(home: Path, name: str) -> dict[str, Any]:
+    target = profile_path(home, name)
+    disabled = disabled_path(home, name)
+    if not target.exists():
+        if disabled.exists():
+            managed_content(disabled)
+            return {"status": "PASS", "action": "already-disabled"}
+        return {"status": "PASS", "action": "already-absent"}
+    managed_content(target)
+    if disabled.exists():
+        raise ProfileError("disabled profile destination already exists; no change was made")
+    target.rename(disabled)
+    return {"status": "PASS", "action": "disabled"}
+
+
+def enable(home: Path, name: str) -> dict[str, Any]:
+    target = profile_path(home, name)
+    disabled = disabled_path(home, name)
+    if target.exists():
+        managed_content(target)
+        return {"status": "PASS", "action": "already-enabled"}
+    if not disabled.exists():
+        raise ProfileError("no disabled GACP profile is available to enable")
+    managed_content(disabled)
+    disabled.rename(target)
+    return {"status": "PASS", "action": "enabled"}
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(prog="gacp-codex-profile", description=__doc__)
+    parser.add_argument("--version", action="version", version=f"%(prog)s {VERSION}")
+    parser.add_argument("--profile-name", default="gacp")
+    parser.add_argument("--codex-home")
+    parser.add_argument("--gacp-repo")
+    parser.add_argument("--codex-bin", default=shutil.which("codex") or "codex")
+    subparsers = parser.add_subparsers(dest="command", required=True)
+    subparsers.add_parser("inspect", help="inspect compatibility and profile state without writing")
+    subparsers.add_parser("render", help="print the exact profile that install would write")
+    subparsers.add_parser("install", help="atomically install the dedicated user-scope profile")
+    subparsers.add_parser("verify", help="verify exact bytes and run Codex strict-config diagnostics")
+    subparsers.add_parser("disable", help="reversibly rename the managed profile out of service")
+    subparsers.add_parser("enable", help="restore a previously disabled managed profile")
+    return parser
+
+
+def main() -> int:
+    try:
+        args = build_parser().parse_args()
+        if not PROFILE_RE.fullmatch(args.profile_name):
+            raise ProfileError("profile name may contain only letters, numbers, hyphens, and underscores")
+        home = codex_home(args.codex_home)
+        if args.command == "disable":
+            result = disable(home, args.profile_name)
+        elif args.command == "enable":
+            result = enable(home, args.profile_name)
+        else:
+            root = repository_root(args.gacp_repo)
+            if args.command == "render":
+                print(render_profile(root, args.profile_name), end="")
+                return 0
+            if args.command == "inspect":
+                result = inspect_state(home, root, args.profile_name, args.codex_bin)
+            elif args.command == "install":
+                result = install(home, root, args.profile_name, args.codex_bin)
+            elif args.command == "verify":
+                result = verify(home, root, args.profile_name, args.codex_bin)
+            else:
+                raise ProfileError(f"unsupported command: {args.command}")
+        print(json.dumps(result, indent=2, sort_keys=True))
+        return 0
+    except ProfileError as exc:
+        print(f"GACP CODEX PROFILE STOP: {exc}", file=sys.stderr)
+        return 2
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

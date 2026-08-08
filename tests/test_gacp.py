@@ -119,6 +119,21 @@ class GACPTestCase(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn('"status": "PASS"', result.stdout)
 
+    def test_runtime_repository_root_token_is_portable(self) -> None:
+        manifest = self.write_manifest()
+        manifest["destination"]["local_path"] = "runtime-repository-root"  # type: ignore[index]
+        self.manifest_path.write_text(json.dumps(manifest) + "\n", encoding="utf-8")
+        result = self.gacp("preflight", str(self.manifest_path))
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_other_relative_local_path_stops(self) -> None:
+        manifest = self.write_manifest()
+        manifest["destination"]["local_path"] = "relative/repository"  # type: ignore[index]
+        self.manifest_path.write_text(json.dumps(manifest) + "\n", encoding="utf-8")
+        result = self.gacp("validate-manifest", str(self.manifest_path))
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("runtime-repository-root token", result.stderr)
+
     def test_missing_start_authorization_stops(self) -> None:
         manifest = self.write_manifest()
         manifest["authorization"]["start_authorized"] = False  # type: ignore[index]

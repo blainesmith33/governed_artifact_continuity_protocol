@@ -16,10 +16,11 @@ import sys
 from typing import Any, Iterable
 
 
-VERSION = "0.2.0"
+VERSION = "0.3.0"
 SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 COMMIT_RE = re.compile(r"^[0-9a-f]{40}$")
 PLACEHOLDERS = {"", "REQUIRED", "REQUIRED_ISO_8601", "REQUIRED_ABSOLUTE_PATH"}
+RUNTIME_REPOSITORY_ROOT = "runtime-repository-root"
 ALLOWED_ACTIONS = {
     "inspect",
     "validate",
@@ -145,9 +146,12 @@ def validate_manifest(data: dict[str, Any]) -> None:
     repository = require_text(destination, "repository", "destination")
     if repository.count("/") != 1 or repository.startswith("/") or repository.endswith("/"):
         raise GACPError("destination.repository must be owner/name")
-    local_path = Path(require_text(destination, "local_path", "destination"))
-    if not local_path.is_absolute():
-        raise GACPError("destination.local_path must be absolute")
+    local_path_value = require_text(destination, "local_path", "destination")
+    local_path = Path(local_path_value)
+    if local_path_value != RUNTIME_REPOSITORY_ROOT and not local_path.is_absolute():
+        raise GACPError(
+            "destination.local_path must be absolute or use the runtime-repository-root token"
+        )
     require_text(destination, "remote", "destination")
     require_text(destination, "branch", "destination")
     require_text(destination, "upstream", "destination")
@@ -193,6 +197,10 @@ def validate_manifest(data: dict[str, Any]) -> None:
         require_text(execution, "receipt_commit_message", "execution")
         if not isinstance(execution.get("require_candidate_changes"), bool):
             raise GACPError("execution.require_candidate_changes must be boolean")
+        if "ready_for_real_migration" in execution and not isinstance(
+            execution["ready_for_real_migration"], bool
+        ):
+            raise GACPError("execution.ready_for_real_migration must be boolean when provided")
 
     artifacts = require_list(data, "artifacts")
     for index, item in enumerate(artifacts):
@@ -255,6 +263,12 @@ def validate_manifest(data: dict[str, Any]) -> None:
 
     result = require_object(data, "result")
     validate_relative_path(require_text(result, "receipt_path", "result"), "result.receipt_path")
+    if "summary_path" in result:
+        summary_path = validate_relative_path(
+            require_text(result, "summary_path", "result"), "result.summary_path"
+        )
+        if not matches(summary_path, allowed_paths):
+            raise GACPError("result.summary_path is outside scope.allowed_paths")
 
     if not authorization["start_authorized"]:
         raise GACPError("start authorization is not granted")
@@ -348,7 +362,10 @@ def preflight(repo: Path, manifest: dict[str, Any], allow_candidates: bool = Fal
     scope = manifest["scope"]
     validation = manifest["validation"]
 
-    if Path(destination["local_path"]).resolve() != repo:
+    if (
+        destination["local_path"] != RUNTIME_REPOSITORY_ROOT
+        and Path(destination["local_path"]).resolve() != repo
+    ):
         raise GACPError(f"local path mismatch: expected {destination['local_path']} got {repo}")
     branch = run_git(repo, "branch", "--show-current")
     if branch != destination["branch"]:
@@ -644,11 +661,15 @@ def command_run(args: argparse.Namespace) -> None:
             "receipt_publication": "commit-containing-this-receipt",
         },
         "exceptions": [],
-        "ready_for_real_migration": True,
+        "ready_for_real_migration": manifest.get("execution", {}).get(
+            "ready_for_real_migration", False
+        ),
         "preflight": preflight_evidence,
         "scope": {**scope_evidence, "changed_files": candidates},
         "next_gate": manifest["authorization"]["current_gate"],
     }
+    if "summary_path" in manifest["result"]:
+        receipt["result_summary"] = manifest["result"]["summary_path"]
     if not {"generate", "write"}.issubset(actions):
         json_output(receipt)
         return

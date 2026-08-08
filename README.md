@@ -330,6 +330,18 @@ As the project matures, this repository may contain:
 
 Automation supports the governed process; it does not become the source of governance. Automated actions remain constrained by project ownership, authorization, validation, and audit requirements.
 
+## Codex execution adapter
+
+GACP includes a reversible user-scope Codex profile adapter for governed work that begins in another
+repository. It preserves the user's base configuration, supplies the GACP bootstrap path privately,
+uses a workspace-based permission profile with a narrow GitHub allowlist, and keeps technical
+permissions separate from owner authorization. Setup, verification, disablement, and fresh-session
+acceptance are documented in [docs/GACP_Codex_Execution_Adapter.md](docs/GACP_Codex_Execution_Adapter.md).
+
+Public operation manifests use `runtime-repository-root` instead of publishing machine-specific
+checkout paths. The runner resolves that token to the repository in which it is invoked and continues
+to verify repository, remote, branch, upstream, baseline, scope, and publication authority.
+
 ## What GACP Is Not
 
 GACP is not:
