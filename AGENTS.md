@@ -75,6 +75,19 @@ Execution-environment permission prompts are capability boundaries, not GACP gov
 
 Meaningful human oversight requires concise interpretation, not manual artifact relay.
 
+Before requesting **any owner approval for a governed action**, the owner-facing coordinating agent must first provide a concise plain-English decision summary sufficient for an informed non-programmer decision. The summary must state, as applicable:
+
+- the exact approval being requested;
+- what action, artifact, destination, and scope the approval covers;
+- what will change if approval is granted;
+- the material risks, consequences, or publication exposure;
+- what will not change and any important exclusions;
+- the current repository/evidence state supporting the request;
+- any interpretations, exceptions, unresolved choices, or limitations that materially affect the decision;
+- what the approval authorizes next and what remains non-authoritative or requires a later gate.
+
+Do not ask the owner to approve a governed action before providing this summary. Technical evidence may accompany or follow the summary, but the owner must not need to interpret raw diffs, hashes, receipts, or implementation details merely to understand what decision is being requested. When a human-readable substantive diff is itself required by the governing workflow, this summary supplements that review and does not replace it.
+
 For any governed job delegated to Codex or another cooperating agent:
 
 1. Before execution, the owner-facing coordinating agent must give the owner a concise plain-English summary of what the delegated agent is being asked to accomplish. Keep the substantive technical/governed handoff in Git.
