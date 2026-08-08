@@ -1,0 +1,94 @@
+{
+  "blocker": null,
+  "controller_runs": [
+    {
+      "operation": "target",
+      "returncode": 0
+    },
+    {
+      "operation": "gacp-result",
+      "returncode": 0
+    }
+  ],
+  "coverage": [
+    "inspect",
+    "edit",
+    "validate",
+    "governed-result",
+    "exact-stage",
+    "commit",
+    "normal-push",
+    "host-controller-governed-runner",
+    "remote-ref-verification",
+    "fresh-session-rerun",
+    "idempotence"
+  ],
+  "failures": [],
+  "fresh_sessions": 2,
+  "profile": {
+    "approval_policy": "on-request",
+    "approvals_reviewer": "auto_review",
+    "base_config_modified": false,
+    "danger_full_access": false,
+    "git_metadata_writable_in_fresh_sessions": false,
+    "permission_base": ":workspace",
+    "temporary_profile_removed": true
+  },
+  "repository_state": {
+    "gacp": {
+      "base_commit": "ec533293a03de4bc4144d6ed21a01ec97ac0ce12",
+      "final_local_commit": "2ee1a417d1a303770d1f7eaeced1d536526f7b88",
+      "final_remote_commit": "2ee1a417d1a303770d1f7eaeced1d536526f7b88",
+      "final_worktree_clean": true,
+      "local_commit_after_first": "2ee1a417d1a303770d1f7eaeced1d536526f7b88",
+      "remote_commit_after_first": "2ee1a417d1a303770d1f7eaeced1d536526f7b88"
+    },
+    "second_session_idempotent": true,
+    "target": {
+      "base_commit": "8f980216f176be8d88810d26af7118a818519bdc",
+      "final_local_commit": "3e8547e1d07383c921a2b1f63462ea7adb4450fb",
+      "final_remote_commit": "3e8547e1d07383c921a2b1f63462ea7adb4450fb",
+      "final_worktree_clean": true,
+      "local_commit_after_first": "3e8547e1d07383c921a2b1f63462ea7adb4450fb",
+      "remote_commit_after_first": "3e8547e1d07383c921a2b1f63462ea7adb4450fb"
+    }
+  },
+  "routine_manual_prompt_count": 0,
+  "scenario": "disposable-fresh-session-cross-repository",
+  "schema_version": "1.0",
+  "sessions": [
+    {
+      "alternate_git_metadata_used": false,
+      "duration_seconds": 70.602,
+      "event_types": [
+        "item.completed",
+        "item.started",
+        "thread.started",
+        "turn.completed",
+        "turn.started"
+      ],
+      "interactive_tty": false,
+      "manual_prompt_count": 0,
+      "returncode": 0,
+      "stdin": "DEVNULL",
+      "timed_out": false
+    },
+    {
+      "alternate_git_metadata_used": false,
+      "duration_seconds": 59.285,
+      "event_types": [
+        "item.completed",
+        "item.started",
+        "thread.started",
+        "turn.completed",
+        "turn.started"
+      ],
+      "interactive_tty": false,
+      "manual_prompt_count": 0,
+      "returncode": 0,
+      "stdin": "DEVNULL",
+      "timed_out": false
+    }
+  ],
+  "status": "PASS"
+}

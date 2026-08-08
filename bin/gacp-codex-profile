@@ -16,7 +16,7 @@ import tomllib
 from typing import Any
 
 
-VERSION = "0.1.0"
+VERSION = "0.1.1"
 MIN_CODEX_VERSION = (0, 138, 0)
 PROFILE_RE = re.compile(r"^[A-Za-z0-9_-]+$")
 MANAGED_MARKER = "# Managed by GACP Codex execution adapter v1"
@@ -92,8 +92,12 @@ def render_profile(root: Path, name: str) -> str:
         "and follow its authority, scope, stop conditions, durable-return rules, and owner-facing reporting rules. "
         "This execution profile supplies technical capability only; it does not grant governance authority. "
         "A manifest or technical approval never substitutes for owner authorization. Preserve unrelated work, "
-        "use the GACP Git backend for substantive inter-agent results, never merge or use destructive Git actions "
-        "without explicit authority, and keep execution-environment approvals distinct from genuine owner gates."
+        "use the GACP Git backend for substantive inter-agent results, and treat each repository's configured Git "
+        "metadata as authoritative. Never copy, relocate, substitute, or use an alternate Git directory or work tree "
+        "to evade protected .git paths. In a controller-managed governed execution, produce and validate only the "
+        "authorized candidate work inside the fresh session; leave staging, commit, push, and ref verification to the "
+        "trusted controller invoking the manifest-validated GACP runner outside the sandbox. Never merge or use destructive Git "
+        "actions without explicit authority, and keep execution-environment approvals distinct from genuine owner gates."
     )
     lines = [
         MANAGED_MARKER,
@@ -113,6 +117,7 @@ def render_profile(root: Path, name: str) -> str:
         "",
         f"[permissions.{permission}.filesystem]",
         '":minimal" = "read"',
+        f"{toml_string(str(root / 'bin' / 'gacp'))} = \"read\"",
         "glob_scan_max_depth = 3",
         "",
         f"[permissions.{permission}.filesystem.\":workspace_roots\"]",
@@ -215,6 +220,7 @@ def public_characteristics(name: str) -> dict[str, Any]:
         "network_allowlist": ["github.com", "api.github.com", "*.githubusercontent.com"],
         "danger_full_access": False,
         "base_config_modified": False,
+        "governed_git_boundary": "host controller invokes manifest-validated GACP runner",
     }
 
 

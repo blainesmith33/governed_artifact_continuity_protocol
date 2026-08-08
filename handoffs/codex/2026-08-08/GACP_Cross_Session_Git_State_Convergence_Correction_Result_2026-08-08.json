@@ -1,0 +1,102 @@
+{
+  "protocol": "GACP",
+  "receipt_version": "1.0",
+  "operation_id": "gacp-git-state-convergence-correction-2026-08-08",
+  "created_at": "2026-08-08T10:22:38-07:00",
+  "manifest_path": "operations/2026-08-08/git-state-convergence-correction.json",
+  "governing_authorization_commit": "6e26ae4d203aac7230d0901d00cff9c76cf25790",
+  "branch": "gacp/codex-execution-automation-corrective-20260807",
+  "status": "PASS",
+  "substantive_acceptance_status": "PASS_PENDING_OWNER_ACCEPTANCE",
+  "ready_for_real_migration": true,
+  "repository": {
+    "name": "blainesmith33/governed_artifact_continuity_protocol",
+    "branch": "gacp/codex-execution-automation-corrective-20260807",
+    "base_commit": "6e26ae4d203aac7230d0901d00cff9c76cf25790",
+    "implementation_commit": "containing-commit"
+  },
+  "implemented": [
+    "evidence-supported cross-session Git-state root-cause diagnosis",
+    "controller-managed candidate and protected Git-mutation boundary",
+    "alternate Git metadata rejection",
+    "local and remote convergence evidence",
+    "second fresh-session idempotence verification"
+  ],
+  "root_cause": "Fresh sessions used temporary copied Git metadata because real .git paths were protected; remote pushes persisted while temporary local refs did not. Auto-review does not weaken read-only permission-profile paths, so session-local Git mutation was not a deterministic persistence boundary.",
+  "correction": {
+    "execution_boundary": "fresh-session candidate edit and validation followed by trusted host-controller GACP runner publication",
+    "alternate_git_metadata_forbidden": true,
+    "fresh_session_git_metadata_writable": false,
+    "security_boundary_weakened": false,
+    "real_projects_modified": false
+  },
+  "validation": [
+    {
+      "name": "deterministic-tests",
+      "status": "PASS"
+    },
+    {
+      "name": "git-diff-check",
+      "status": "PASS"
+    },
+    {
+      "name": "fresh-session-acceptance",
+      "status": "PASS"
+    },
+    {
+      "name": "local-remote-convergence",
+      "status": "PASS"
+    },
+    {
+      "name": "second-session-idempotence",
+      "status": "PASS"
+    }
+  ],
+  "verification": {
+    "deterministic_tests": {
+      "status": "PASS",
+      "passed": 21,
+      "failed": 0
+    },
+    "git_diff_check": "PASS",
+    "fresh_session_acceptance": "PASS"
+  },
+  "acceptance": {
+    "scenario": "disposable-fresh-session-cross-repository",
+    "fresh_sessions": 2,
+    "routine_manual_prompt_count": 0,
+    "alternate_git_metadata_used": false,
+    "controller_runner_operations_passed": 2,
+    "second_session_idempotent": true,
+    "final_worktrees_clean": true,
+    "result_identity_valid": true,
+    "target_local_remote_commit": "3e8547e1d07383c921a2b1f63462ea7adb4450fb",
+    "gacp_local_remote_commit": "2ee1a417d1a303770d1f7eaeced1d536526f7b88"
+  },
+  "changed_files": [
+    "bin/gacp-codex-profile",
+    "docs/GACP_Codex_Execution_Adapter.md",
+    "evidence/2026-08-08/git-state-convergence-correction.json",
+    "handoffs/codex/2026-08-08/GACP_Cross_Session_Git_State_Convergence_Correction_Result_2026-08-08.json",
+    "handoffs/codex/2026-08-08/GACP_Cross_Session_Git_State_Convergence_Correction_Result_2026-08-08.md",
+    "operations/2026-08-08/git-state-convergence-correction.json",
+    "tests/run_codex_execution_acceptance.py",
+    "tests/test_gacp_codex_profile.py"
+  ],
+  "evidence_path": "evidence/2026-08-08/git-state-convergence-correction.json",
+  "result_summary_path": "handoffs/codex/2026-08-08/GACP_Cross_Session_Git_State_Convergence_Correction_Result_2026-08-08.md",
+  "publication": {
+    "branch": "gacp/codex-execution-automation-corrective-20260807",
+    "commit": "containing-commit",
+    "normal_push_authorized": true,
+    "merge_authorized": false
+  },
+  "remaining_limitations": [
+    "Permission-profile behavior must be revalidated after material Codex permission-model changes.",
+    "Complete Codex session archive coverage remains unverified.",
+    "A trusted controller is required for protected Git metadata mutation."
+  ],
+  "exceptions": [],
+  "recommendation": "Owner should substantively accept the passed correction and technical readiness; merge and any real migration remain separate gates.",
+  "next_gate": "owner-substantive-acceptance"
+}

@@ -1,0 +1,100 @@
+{
+  "protocol": "GACP",
+  "manifest_version": "1.0",
+  "operation_id": "gacp-git-state-convergence-correction-2026-08-08",
+  "created_at": "2026-08-08T10:22:38-07:00",
+  "source_environment": "Codex execution of owner authorization commit 6e26ae4d203aac7230d0901d00cff9c76cf25790",
+  "destination": {
+    "project": "Governed Artifact Continuity Protocol",
+    "repository": "blainesmith33/governed_artifact_continuity_protocol",
+    "local_path": "runtime-repository-root",
+    "remote": "origin",
+    "branch": "gacp/codex-execution-automation-corrective-20260807",
+    "upstream": "origin/gacp/codex-execution-automation-corrective-20260807"
+  },
+  "scope": {
+    "allowed_actions": [
+      "inspect",
+      "validate",
+      "stage",
+      "commit",
+      "push"
+    ],
+    "allowed_paths": [
+      "bin/gacp-codex-profile",
+      "docs/GACP_Codex_Execution_Adapter.md",
+      "evidence/2026-08-08/git-state-convergence-correction.json",
+      "handoffs/codex/2026-08-08/GACP_Cross_Session_Git_State_Convergence_Correction_Result_2026-08-08.json",
+      "handoffs/codex/2026-08-08/GACP_Cross_Session_Git_State_Convergence_Correction_Result_2026-08-08.md",
+      "operations/2026-08-08/git-state-convergence-correction.json",
+      "tests/run_codex_execution_acceptance.py",
+      "tests/test_gacp_codex_profile.py"
+    ],
+    "candidate_paths": [
+      "bin/gacp-codex-profile",
+      "docs/GACP_Codex_Execution_Adapter.md",
+      "evidence/2026-08-08/git-state-convergence-correction.json",
+      "handoffs/codex/2026-08-08/GACP_Cross_Session_Git_State_Convergence_Correction_Result_2026-08-08.json",
+      "handoffs/codex/2026-08-08/GACP_Cross_Session_Git_State_Convergence_Correction_Result_2026-08-08.md",
+      "operations/2026-08-08/git-state-convergence-correction.json",
+      "tests/run_codex_execution_acceptance.py",
+      "tests/test_gacp_codex_profile.py"
+    ],
+    "excluded_paths": [
+      "archives",
+      "proofs",
+      "handoffs/chatgpt"
+    ],
+    "base_commit": "6e26ae4d203aac7230d0901d00cff9c76cf25790"
+  },
+  "execution": {
+    "commit_message": "Correct GACP Git-state convergence boundary",
+    "receipt_commit_message": "Unused: governed receipt is included in implementation commit",
+    "require_candidate_changes": true,
+    "ready_for_real_migration": true
+  },
+  "artifacts": [
+    {
+      "path": "handoffs/chatgpt/2026-08-08/GACP_Cross_Session_Git_State_Convergence_Correction_Authorization_2026-08-08.md",
+      "role": "owner-authorized governed correction instruction",
+      "integration_mode": "governed-instruction",
+      "destination_path": "handoff-only",
+      "media_type": "text/markdown",
+      "bytes": 5552,
+      "sha256": "5f4aa709c87d3943c5ea3b2283c731d7cbda7eab1c07614c080700ad66b49590",
+      "approval_status": "approved",
+      "approval_reference": "commit 6e26ae4d203aac7230d0901d00cff9c76cf25790",
+      "dependencies": [
+        "AGENTS.md",
+        "GACP_File_First_Governed_Handoff_Workflow.md",
+        "handoffs/chatgpt/2026-08-07/GACP_End_of_Session_Continuity_Handoff_2026-08-07.md",
+        "handoffs/codex/2026-08-07/GACP_Sandbox_Remediation_Acceptance_Result_2026-08-07.md"
+      ]
+    }
+  ],
+  "sensitivity": {
+    "classification": "public",
+    "public_repository": true,
+    "publication_authorized": true
+  },
+  "validation": {
+    "require_clean_tracked": true,
+    "allow_untracked_paths": [],
+    "protected_files": [
+      {
+        "path": "handoffs/chatgpt/2026-08-08/GACP_Cross_Session_Git_State_Convergence_Correction_Authorization_2026-08-08.md",
+        "sha256": "5f4aa709c87d3943c5ea3b2283c731d7cbda7eab1c07614c080700ad66b49590"
+      }
+    ]
+  },
+  "authorization": {
+    "start_authorized": true,
+    "authorized_by": "owner",
+    "approval_reference": "commit 6e26ae4d203aac7230d0901d00cff9c76cf25790",
+    "current_gate": "acceptance"
+  },
+  "result": {
+    "receipt_path": "handoffs/codex/2026-08-08/GACP_Cross_Session_Git_State_Convergence_Correction_Result_2026-08-08.json",
+    "summary_path": "handoffs/codex/2026-08-08/GACP_Cross_Session_Git_State_Convergence_Correction_Result_2026-08-08.md"
+  }
+}

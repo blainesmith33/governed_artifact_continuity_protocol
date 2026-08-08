@@ -47,6 +47,8 @@ provided by the session, and the configured GACP checkout is the additional work
 - custom permissions extend the built-in `:workspace` profile
 - current target and one configured GACP backend are writable workspace roots
 - `.git`, `.agents`, and `.codex` remain protected metadata paths
+- configured repository Git metadata remains authoritative; copied or alternate Git directories/work trees are forbidden
+- authorized candidate edits and validation remain inside the fresh session; the trusted host controller invokes the GACP runner for Git mutations
 - network access is allowlisted to GitHub, its API, and GitHub content hosts
 - common environment-secret files are denied
 - no `:danger-full-access`, danger-full-access sandbox, blanket network, or approval bypass
@@ -66,6 +68,13 @@ merge a protected branch, or replace owner acceptance.
 `disable` reversibly renames only a managed profile and is idempotent. `enable` restores it. The
 adapter stops on legacy sandbox configuration, permission-name collisions, managed drift, unsupported
 Codex versions, or non-GACP files at either managed path.
+
+For controller-managed governed execution, the fresh session produces and validates only the
+manifest-authorized candidate files. After it returns, the trusted host controller independently
+checks the candidate scope and invokes `bin/gacp run <manifest>` outside the sandbox for exact staging,
+commit, normal push, and ref verification. The controller then starts the second fresh session to
+verify the published state is idempotent. This split keeps `.git` read-only in every agent session;
+raw session-local Git mutation and alternate metadata remain forbidden.
 
 ## Operation-specific controls
 

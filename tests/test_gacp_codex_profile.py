@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+import runpy
 import subprocess
 import sys
 import tempfile
@@ -13,6 +14,7 @@ import unittest
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 ADAPTER = PROJECT_ROOT / "bin" / "gacp-codex-profile"
+ACCEPTANCE = PROJECT_ROOT / "tests" / "run_codex_execution_acceptance.py"
 
 
 def command(*args: str, cwd: Path | None = None) -> subprocess.CompletedProcess[str]:
@@ -52,7 +54,7 @@ class CodexProfileTests(unittest.TestCase):
     def tearDown(self) -> None:
         self.temp.cleanup()
 
-    def adapter(self, command_name: str) -> subprocess.CompletedProcess[str]:
+    def adapter(self, command_name: str, *options: str) -> subprocess.CompletedProcess[str]:
         return command(
             sys.executable,
             str(ADAPTER),
@@ -62,6 +64,7 @@ class CodexProfileTests(unittest.TestCase):
             str(self.repo),
             "--codex-bin",
             str(self.codex),
+            *options,
             command_name,
         )
 
@@ -74,6 +77,9 @@ class CodexProfileTests(unittest.TestCase):
         body = profile.read_text(encoding="utf-8")
         self.assertIn('approvals_reviewer = "auto_review"', body)
         self.assertIn('extends = ":workspace"', body)
+        self.assertIn("Never copy, relocate, substitute, or use an alternate Git directory", body)
+        self.assertIn("leave staging, commit, push, and ref verification to the trusted controller", body)
+        self.assertIn(f'{json.dumps(str(self.repo / "bin" / "gacp"))} = "read"', body)
         self.assertNotIn("danger-full-access", body)
         second = self.adapter("install")
         self.assertEqual(json.loads(second.stdout)["action"], "already-current")
@@ -110,6 +116,23 @@ class CodexProfileTests(unittest.TestCase):
         self.assertEqual(report["profile_state"], "absent")
         self.assertFalse(report["characteristics"]["danger_full_access"])
         self.assertNotIn(str(self.root), result.stdout)
+
+    def test_acceptance_detects_alternate_git_metadata_commands(self) -> None:
+        functions = runpy.run_path(str(ACCEPTANCE))
+        detect = functions["uses_alternate_git_metadata"]
+        ordinary = json.dumps(
+            {"item": {"type": "command_execution", "command": "git commit -m governed"}}
+        )
+        alternate = json.dumps(
+            {"item": {"type": "command_execution", "command": "git --git-dir=/tmp/copy status"}}
+        )
+        alternate_environment = json.dumps(
+            {"item": {"type": "command_execution", "command": "GIT_DIR=/tmp/copy git status"}}
+        )
+        self.assertFalse(detect(ordinary))
+        self.assertTrue(detect(alternate))
+        self.assertTrue(detect(alternate_environment))
+
 
 
 if __name__ == "__main__":
