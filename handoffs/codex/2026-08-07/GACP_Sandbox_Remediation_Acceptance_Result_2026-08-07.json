@@ -1,0 +1,122 @@
+{
+  "protocol": "GACP",
+  "receipt_version": "1.0",
+  "operation_id": "gacp-sandbox-remediation-acceptance-2026-08-07",
+  "created_at": "2026-08-07T19:16:14-07:00",
+  "governing_handoff_commit": "d4d06f9b8222d16a43de31584696412b38e44713",
+  "status": "FAIL",
+  "mechanical_remediation_status": "PASS",
+  "sandbox_prerequisite_status": "PASS",
+  "acceptance_status": "FAIL-BLOCKED",
+  "ready_for_real_migration": false,
+  "host_changes": {
+    "package_metadata_refreshed": true,
+    "requested_packages_installed": [
+      "apparmor-profiles",
+      "apparmor-utils"
+    ],
+    "runtime_dependencies_installed": [
+      "python3-apparmor",
+      "python3-libapparmor"
+    ],
+    "profile_installed": "/etc/apparmor.d/bwrap-userns-restrict",
+    "profile_mode": "0644",
+    "profile_owner": "root:root",
+    "profile_loaded": true,
+    "sysctl_writes": [],
+    "packages_removed": [],
+    "packages_upgraded": [],
+    "base_codex_config_modified": false,
+    "unrelated_projects_modified": false
+  },
+  "administrator_authentication": {
+    "required_for_remediation": true,
+    "included_in_routine_prompt_count": false,
+    "required_inside_acceptance_sessions": false
+  },
+  "security_boundary": {
+    "kernel.apparmor_restrict_unprivileged_userns": 1,
+    "kernel.unprivileged_userns_clone": 1,
+    "user.max_user_namespaces_host": 29345,
+    "global_restriction_preserved": true,
+    "danger_full_access_used": false,
+    "approval_bypass_used": false
+  },
+  "profile_integrity": {
+    "packaged_sha256": "11d39094f044f0cda0febb3ad517b830301da6b2ce929664af09ee9e4dd264f9",
+    "installed_sha256": "11d39094f044f0cda0febb3ad517b830301da6b2ce929664af09ee9e4dd264f9",
+    "exact_match": true
+  },
+  "sandbox_probes": [
+    {
+      "probe": "minimal-bwrap-user-namespace",
+      "status": "PASS"
+    },
+    {
+      "probe": "minimal-bwrap-user-network-namespace",
+      "status": "PASS"
+    },
+    {
+      "probe": "codex-sandbox-/bin/true",
+      "status": "PASS"
+    },
+    {
+      "probe": "generic-unshare-user-namespace",
+      "status": "EXPECTED-FAIL",
+      "reason": "global AppArmor restriction intentionally preserved; bwrap-specific profile is narrow"
+    }
+  ],
+  "validation": {
+    "unit_tests": {
+      "status": "PASS",
+      "passed": 20,
+      "failed": 0
+    },
+    "gacp_profile_strict_verify": "PASS",
+    "temporary_acceptance_profile_removed": true
+  },
+  "acceptance": {
+    "scenario": "disposable-fresh-session-cross-repository",
+    "fresh_sessions": 2,
+    "interactive_tty": false,
+    "stdin": "DEVNULL",
+    "routine_manual_prompt_count": 0,
+    "sandbox_initialization_blocker": null,
+    "real_repository_execution_reached": true,
+    "first_session_remote_commits_and_pushes_completed": true,
+    "second_session_fail_closed_on_state_mismatch": true,
+    "idempotence_proven": false,
+    "status": "FAIL",
+    "failures": [
+      "final-worktree",
+      "gacp-receipt-commit-missing",
+      "gacp-scope",
+      "result-receipt",
+      "target-commit-missing",
+      "target-scope"
+    ],
+    "session_results": [
+      {
+        "returncode": 0,
+        "timed_out": false,
+        "manual_prompt_count": 0,
+        "duration_seconds": 182.635
+      },
+      {
+        "returncode": 0,
+        "timed_out": false,
+        "manual_prompt_count": 0,
+        "duration_seconds": 100.881
+      }
+    ]
+  },
+  "official_reference": "https://learn.chatgpt.com/docs/sandboxing",
+  "recommendation": "Do not use for real migrations; authorize a bounded investigation of cross-session local Git state persistence before another clean acceptance rerun.",
+  "publication": {
+    "branch": "gacp/codex-execution-automation-corrective-20260807",
+    "commit": "containing-commit",
+    "normal_push_authorized": true,
+    "merge_authorized": false
+  },
+  "next_gate": "owner-authorized-local-git-state-correction"
+}
