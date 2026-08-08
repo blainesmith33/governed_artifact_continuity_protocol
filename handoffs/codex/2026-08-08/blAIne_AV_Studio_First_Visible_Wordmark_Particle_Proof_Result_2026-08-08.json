@@ -1,0 +1,183 @@
+{
+  "protocol": "GACP",
+  "receipt_version": "1.0",
+  "operation_id": "blaine-av-studio-first-visible-wordmark-particle-proof-20260808",
+  "created_at": "2026-08-08T20:41:08Z",
+  "manifest_path": "handoffs/chatgpt/2026-08-08/blAIne_AV_Studio_First_Visible_Wordmark_Particle_Proof_Authorization_2026-08-08.md",
+  "authorization": {
+    "handoff_commit": "2b61cd41d7bda14315974e4ac7b6a932a9fdd58a",
+    "handoff_path": "handoffs/chatgpt/2026-08-08/blAIne_AV_Studio_First_Visible_Wordmark_Particle_Proof_Authorization_2026-08-08.md",
+    "governing_particle_core_result_commit": "0949a43c48c7ac67fc176aa31f687aeeef729af8",
+    "governing_particle_core_result_path": "handoffs/codex/2026-08-08/blAIne_AV_Studio_Accepted_Particle_Core_Merge_Result_2026-08-08.json",
+    "owner_decision": "approved direction",
+    "target_main_merge_authorized": false,
+    "implementation_branch_publication_authorized": true,
+    "gacp_result_publication_authorized": true
+  },
+  "status": "PASS",
+  "status_summary": "A bounded deterministic SDL2 wordmark particle proof was implemented, visibly exercised in the Steam Deck graphical session, validated, and published on a separate governed branch; main was not changed and visual acceptance remains an owner gate.",
+  "repository": {
+    "name": "blainesmith33/blAIne_av_studio",
+    "branch": "gacp/blaine-av-studio-visible-wordmark-particle-proof-20260808",
+    "base_commit": "790798904db67391961644504cb98468d060782f",
+    "implementation_parent": "790798904db67391961644504cb98468d060782f",
+    "implementation_commit": "1c218588b17bdf41307b69f821f8a079d029e27f"
+  },
+  "rendering_integration": {
+    "surface": "SDL2-compatible window, event loop, blend-capable 2D renderer, and CPU circle drawing",
+    "dependency_source": "Existing SteamOS sdl2-compat runtime and installed org.freedesktop.Sdk 25.08 SDL2 development interface",
+    "runtime_version": "sdl2-compat 2.32.56-2",
+    "build_interface_version": "SDL2 2.32.70",
+    "license": "Zlib",
+    "vendored": false,
+    "operating_system_mutated": false,
+    "architecture_scope": "Demo-specific integration; no general renderer abstraction was introduced."
+  },
+  "target_mask": {
+    "path": "apps/wordmark-demo/assets/blaine-wordmark.mask",
+    "provenance": "provisional",
+    "original_raster_available": false,
+    "representation": "Repository-native plaintext mask preserving exact capitalization blAIne; pale bl/ne cells and cyan AI cells",
+    "pixel_exact_claim": false,
+    "limitation": "The source raster was absent from the target repository and accessible workspace, so fidelity to the original asset requires later owner review or replacement."
+  },
+  "implemented": [
+    "added a directly launchable 960-by-540 SDL2 wordmark demo with a dark background",
+    "expanded an 86-cell provisional mask into 774 deterministic particle targets",
+    "used the accepted particle core for particle count, age, lifecycle, and restart state",
+    "added fixed-seed dispersed starts, deterministic target assignment, four-second eased assembly, and indefinite final hold",
+    "rendered pale bl/ne particles and cyan AI particles with restrained translucent cyan halos",
+    "added R/Space deterministic replay plus Escape/Q and window-close clean exit",
+    "added an assembled-frame capture option and checked in runtime screenshot evidence",
+    "added focused mask, color, assignment, motion, assembled-state, restart, and invalid-input tests",
+    "documented the provisional asset, dependency/license decision, launch command, controls, scope, and evidence"
+  ],
+  "changed_files": [
+    "CMakeLists.txt",
+    "README.md",
+    "apps/wordmark-demo/CMakeLists.txt",
+    "apps/wordmark-demo/assets/blaine-wordmark.mask",
+    "apps/wordmark-demo/include/blaine/demo/wordmark_scene.hpp",
+    "apps/wordmark-demo/src/main.cpp",
+    "apps/wordmark-demo/src/wordmark_scene.cpp",
+    "docs/evidence/wordmark-particle-proof.png",
+    "docs/wordmark-particle-proof.md",
+    "tests/CMakeLists.txt",
+    "tests/wordmark_scene_tests.cpp"
+  ],
+  "validation": [
+    {
+      "name": "bootstrap-and-base",
+      "status": "PASS",
+      "evidence": "Verified target and GACP identities, remotes, branches, upstreams, clean tracked state, exact handoff, governing result, and local/remote target main at required base 790798904db67391961644504cb98468d060782f before implementation."
+    },
+    {
+      "name": "particle-core-preflight",
+      "status": "PASS",
+      "evidence": "A fresh preimplementation out-of-tree build passed the accepted particle-core CTest and studio smoke check."
+    },
+    {
+      "name": "clean-release-configure-and-build",
+      "status": "PASS",
+      "evidence": "A final fresh disposable Ninja release build configured and compiled all 13 targets with GCC 15.2.0 and no compiler warnings."
+    },
+    {
+      "name": "ctest",
+      "status": "PASS",
+      "evidence": "CTest passed particle-core and wordmark-scene, 2 of 2, from the final clean release build."
+    },
+    {
+      "name": "deterministic-repeat",
+      "status": "PASS",
+      "evidence": "The wordmark scene test executable passed ten consecutive runs; tests compare same-seed initial and animated draw data plus exact restart state."
+    },
+    {
+      "name": "target-mask-color-and-assignment",
+      "status": "PASS",
+      "evidence": "Tests verified exact blAIne metadata, 35-by-7 dimensions, 86 occupied cells, 53 pale and 33 cyan cells, 774 expanded targets, 477 pale and 297 cyan/glowing particles, deterministic target motion, and unsupported-character rejection."
+    },
+    {
+      "name": "studio-smoke",
+      "status": "PASS",
+      "evidence": "The existing studio executable reported version 0.0.1 and successful engine initialization from the final clean build."
+    },
+    {
+      "name": "sdl-disabled-build-option",
+      "status": "PASS",
+      "evidence": "A separate Debug configuration with BLAINE_BUILD_WORDMARK_DEMO=OFF built and passed both non-windowed test executables while consuming the configured build-tree mask."
+    },
+    {
+      "name": "address-and-undefined-behavior-sanitizers",
+      "status": "PASS",
+      "evidence": "Particle-core and wordmark-scene passed under AddressSanitizer and UndefinedBehaviorSanitizer with leak detection disabled because LeakSanitizer cannot operate under the SDK sandbox's ptrace confinement."
+    },
+    {
+      "name": "steam-deck-visible-runtime",
+      "status": "PASS",
+      "evidence": "On SteamOS 3.8.16 in the active Wayland graphical session, the final clean-build executable opened a visible 960-by-540 window, ran the dispersed-to-assembled animation, held the result, captured the framebuffer after five seconds, and exited cleanly. Interactive R input produced two logged deterministic replay restarts followed by clean exit."
+    },
+    {
+      "name": "screenshot-evidence",
+      "status": "PASS",
+      "evidence": "The assembled-state screenshot is docs/evidence/wordmark-particle-proof.png (960 by 540; SHA-256 0c390bb4a8390608c44bde43b6ed6c13ef80da6fa65aad8644bc5864bb30ef63). Two final framebuffer captures were byte-identical before PNG conversion. The screenshot was inspected for dark background, complete blAIne composition, pale outer letters, and cyan AI; owner visual acceptance remains pending."
+    },
+    {
+      "name": "dependency-and-license",
+      "status": "PASS",
+      "evidence": "Local package metadata confirmed SteamOS sdl2-compat 2.32.56-2 under the Zlib license and dependent on SDL3; the installed Freedesktop SDK exposed SDL2 2.32.70 and -lSDL2. No dependency was vendored or installed."
+    },
+    {
+      "name": "scope-exclusions-and-public-safety",
+      "status": "PASS",
+      "evidence": "Scope and source inspection found no general renderer, GPU simulation, shader system, 3D, editor, audio, timeline, project I/O, AI, export, deployment, networking, generated build output, agent-local state, credentials, private keys, or raw conversation material. Staged diff passed git diff --check."
+    },
+    {
+      "name": "post-publication-synchronization",
+      "status": "PASS",
+      "evidence": "Local HEAD, configured upstream, and remote governed implementation branch resolved to 1c218588b17bdf41307b69f821f8a079d029e27f; target main remained at 790798904db67391961644504cb98468d060782f; worktree and index were clean."
+    }
+  ],
+  "confirmed_exclusions": [
+    "no merge into target main",
+    "no general-purpose renderer architecture or rendering API abstraction",
+    "no GPU particle simulation, compute shaders, elaborate shaders, 3D, cameras, or post-processing",
+    "no editor UI or general emitter controls",
+    "no audio, analysis, reactivity, or master timeline work",
+    "no project save/load, asset browser/import, AI, export, deployment, or networking",
+    "no unrelated broad refactor",
+    "no operating-system package mutation or vendored framework",
+    "no destructive Git action, amend, squash, rebase, force-push, history rewrite, or branch deletion"
+  ],
+  "visual_review": {
+    "self_accepted": false,
+    "owner_review_required": true,
+    "evidence_path": "docs/evidence/wordmark-particle-proof.png",
+    "limitation": "The checked-in screenshot is strong runtime evidence, but recognizability, composition quality, glow treatment, and brand fidelity remain substantive owner judgments."
+  },
+  "blockers": [],
+  "action_outcomes": {
+    "target_stage": "performed-and-verified",
+    "target_commit": "performed-and-verified",
+    "target_push": "performed-non-force-and-verified",
+    "target_main_merge": "not-authorized-and-not-performed",
+    "gacp_result_stage": "pending",
+    "gacp_result_commit": "pending",
+    "gacp_result_push": "pending"
+  },
+  "publication": {
+    "target_repository": "blainesmith33/blAIne_av_studio",
+    "target_branch": "gacp/blaine-av-studio-visible-wordmark-particle-proof-20260808",
+    "target_commit": "1c218588b17bdf41307b69f821f8a079d029e27f",
+    "target_main_commit_unchanged": "790798904db67391961644504cb98468d060782f",
+    "gacp_repository": "blainesmith33/governed_artifact_continuity_protocol",
+    "gacp_branch": "gacp/blaine-av-studio-visible-wordmark-proof-result-20260808",
+    "gacp_base_commit": "2b61cd41d7bda14315974e4ac7b6a932a9fdd58a",
+    "receipt_publication": "commit-containing-this-receipt"
+  },
+  "exceptions": [
+    "The original selected raster was unavailable; the checked-in mask is explicitly provisional and not claimed pixel-exact.",
+    "LeakSanitizer could not run under SDK ptrace confinement; AddressSanitizer and UndefinedBehaviorSanitizer passed with leak detection disabled."
+  ],
+  "ready_for_real_migration": false,
+  "next_gate": "Owner substantive visual review of the visible proof. The owner may accept it, request visual revision, provide or replace the exact source asset, or reject the rendering/dependency choice; only a later explicit handoff may merge it into main or begin another product slice."
+}
