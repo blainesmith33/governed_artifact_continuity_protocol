@@ -1,0 +1,145 @@
+{
+  "protocol": "GACP",
+  "receipt_version": "1.0",
+  "operation_id": "blaine-av-studio-design-history-recovery-project-definition-20260808",
+  "created_at": "2026-08-08T19:20:59Z",
+  "manifest_path": "handoffs/chatgpt/2026-08-08/blAIne_AV_Studio_Design_History_Recovery_and_Project_Definition_Handoff_2026-08-08.md",
+  "authorization": {
+    "handoff_commit": "86a1d7f24f555145ea46f24248a2c6d4e2b2c98c",
+    "handoff_path": "handoffs/chatgpt/2026-08-08/blAIne_AV_Studio_Design_History_Recovery_and_Project_Definition_Handoff_2026-08-08.md",
+    "operation_class": "governed design-history recovery, classification, and project-definition preparation",
+    "target_candidate_branch_publication_authorized": true,
+    "gacp_result_publication_authorized": true
+  },
+  "status": "PASS",
+  "status_summary": "Recovered design intent was classified and published as candidate project-definition documentation on a dedicated review branch; implementation and dependency selection remained out of scope.",
+  "repository": {
+    "name": "blainesmith33/blAIne_av_studio",
+    "branch": "gacp/blaine-av-studio-design-history-project-definition-20260808",
+    "base_commit": "6c6398ae69b0675cd322efda79a5f05619f29553",
+    "implementation_parent": "6c6398ae69b0675cd322efda79a5f05619f29553",
+    "implementation_commit": "96e55257d3d308d2928f09f27c678f1a72bfab7e"
+  },
+  "changed_files": [
+    "README.md",
+    "docs/architecture.md",
+    "docs/audio-visual-timeline-model.md",
+    "docs/governance-and-continuity.md",
+    "docs/project-definition.md",
+    "docs/roadmap.md"
+  ],
+  "recovered_design_intent": [
+    "blAIne AV Studio is a governed multimedia creation and production environment integrating visual rendering and animation with first-class audio under a shared project and timeline model.",
+    "Visual, audio, asset, scene, project, timeline, editor, preview/export, AI-assistance, and governance responsibilities belong in one coherent product definition.",
+    "Projects, scenes, effects, and controllable parameters are intended to be data-driven so editor and AI tooling can operate through bounded deterministic abstractions.",
+    "AI assistance directs structured project state and engine parameters rather than directly owning frame rendering.",
+    "Steam Deck is the primary development machine; other named platforms remain candidate compute, test, preview, client, export, or deployment contexts.",
+    "Studio and reusable engine/runtime responsibilities may be separated where useful, with GACP providing durable approved-artifact and inter-agent continuity."
+  ],
+  "proposed_structures": [
+    "A responsibility-based subsystem classification covering core/runtime, rendering, animation, particles, shaders/materials/effects, project/scene data, assets, audio, master timeline, studio UI, target runtimes, export, AI assistance, and governance integration.",
+    "A candidate dependency direction in which structured project state and shared time feed deterministic runtime systems while editor and AI tools modify bounded abstractions.",
+    "A non-binding audio-visual timeline vocabulary including project, master timeline, timed item, optional track or lane, parameter automation, asset reference, and evaluation result.",
+    "A platform-role classification separating development, compute/test, preview/runtime, broadcast integration, packaged application, and rendered output contexts.",
+    "A gated roadmap from owner acceptance through decision framing, a separately authorized minimal proof, subsystem increments, and later productization.",
+    "A candidate authority-state vocabulary distinguishing continuity evidence, candidate definition, accepted definition, implementation authorization, implemented evidence, and substantive acceptance."
+  ],
+  "open_decisions": [
+    "graphics and compute APIs, shader language, and visual effect representation",
+    "audio architecture, backend, detailed audio feature scope, and audio/video synchronization tolerances",
+    "project, scene, asset, timeline, persistence, serialization, and interchange formats",
+    "master clock, timebase, rates, seeking, looping, latency, replay, event ordering, and automation semantics",
+    "editor toolkit, interaction design, plugin or extension model, and AI provider or permission model",
+    "physics, compositing, recording, mixing, analysis, networking, and target-specific feature scope",
+    "third-party dependencies, licensing, packaging, CI/CD, release policy, and platform priorities",
+    "the first feature implementation slice, interfaces, architecture details, and acceptance tests"
+  ],
+  "implemented": [
+    "verified the target identity, clean state, accepted baseline ancestry, and synchronization of main with origin/main",
+    "read the complete target and GACP governance plus the named authoritative handoff",
+    "inspected and classified the existing C++20/CMake scaffold as continuity baseline only",
+    "created six candidate documentation and navigation artifacts within the authorized paths",
+    "validated and committed exactly the documentation scope",
+    "normally published the dedicated governed target branch and verified local, upstream, and remote SHA identity",
+    "prepared this durable GACP result"
+  ],
+  "validation": [
+    {
+      "name": "target-identity-and-baseline",
+      "status": "PASS",
+      "evidence": "Target origin is blainesmith33/blAIne_av_studio; fetched main and origin/main were synchronized at accepted baseline 6c6398ae69b0675cd322efda79a5f05619f29553 before the candidate branch was created."
+    },
+    {
+      "name": "authorized-scope",
+      "status": "PASS",
+      "evidence": "Exactly README.md and five files under docs/ were changed; source, build configuration, license, generated output, and agent-local state were unchanged and unstaged."
+    },
+    {
+      "name": "provenance-and-open-decisions",
+      "status": "PASS",
+      "evidence": "Candidate documents distinguish recovered-approved-intent, continuity-baseline, proposed-structure, and open-decision; implementation choices remain explicitly unresolved."
+    },
+    {
+      "name": "documentation-integrity",
+      "status": "PASS",
+      "evidence": "README relative links resolve; all candidate Markdown files are valid UTF-8 with final newlines; content was reviewed for internal consistency."
+    },
+    {
+      "name": "diff-check",
+      "status": "PASS",
+      "evidence": "git diff --cached --check produced no findings before commit."
+    },
+    {
+      "name": "public-safety",
+      "status": "PASS",
+      "evidence": "No credentials, private-key markers, machine-local absolute paths, raw conversation dumps, generated build output, or private agent state were introduced."
+    },
+    {
+      "name": "target-publication",
+      "status": "PASS",
+      "evidence": "Local HEAD, configured upstream, and authoritative remote branch all resolved to 96e55257d3d308d2928f09f27c678f1a72bfab7e after ordinary non-force publication; tracked status was clean."
+    }
+  ],
+  "target_publication": {
+    "repository": "blainesmith33/blAIne_av_studio",
+    "branch": "gacp/blaine-av-studio-design-history-project-definition-20260808",
+    "commit": "96e55257d3d308d2928f09f27c678f1a72bfab7e",
+    "remote_branch_sha": "96e55257d3d308d2928f09f27c678f1a72bfab7e",
+    "subject": "Document candidate AV Studio project definition",
+    "push": "ordinary non-force new branch publication performed and verified",
+    "candidate_only": true,
+    "merged_to_main": false
+  },
+  "confirmed_exclusions": [
+    "no feature implementation or source refactor",
+    "no dependency or package-manager introduction",
+    "no graphics, audio, timeline, editor, AI, export, networking, or platform implementation",
+    "no licensing, backend, format, toolkit, packaging, or CI/CD selection",
+    "no generated build output or machine-local agent state publication",
+    "no raw/private conversation transcript publication",
+    "no merge to target main, force-push, history rewrite, branch deletion, or destructive Git action"
+  ],
+  "action_outcomes": {
+    "target_stage": "performed-exact-documentation-scope",
+    "target_commit": "performed-and-verified",
+    "target_push": "performed-and-verified",
+    "gacp_result_stage": "pending",
+    "gacp_result_commit": "pending",
+    "gacp_result_push": "pending"
+  },
+  "publication": {
+    "target_repository": "blainesmith33/blAIne_av_studio",
+    "target_branch": "gacp/blaine-av-studio-design-history-project-definition-20260808",
+    "target_commit": "96e55257d3d308d2928f09f27c678f1a72bfab7e",
+    "gacp_repository": "blainesmith33/governed_artifact_continuity_protocol",
+    "gacp_branch": "gacp/blaine-av-studio-design-history-project-definition-result-20260808",
+    "gacp_base_commit": "86a1d7f24f555145ea46f24248a2c6d4e2b2c98c",
+    "receipt_publication": "commit-containing-this-receipt"
+  },
+  "exceptions": [],
+  "ambiguity": [
+    "Historical themes were synthesized only from the owner-authorized handoff and repository evidence; no raw conversation transcript was used or published, and no more exact provenance is claimed."
+  ],
+  "ready_for_real_migration": false,
+  "next_gate": "Owner substantive review and acceptance, revision, or rejection of the candidate project definition and architecture; merge to target main and any implementation require separate authorization."
+}
