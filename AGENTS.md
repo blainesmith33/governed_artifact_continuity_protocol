@@ -110,6 +110,24 @@ The provenance and rationale for this requirement are recorded in:
 
 `handoffs/chatgpt/2026-08-07/GACP_Owner_Facing_Reporting_Governance_Amendment_2026-08-07.md`
 
+## Deferred session-archive completeness requirement
+
+Complete Codex session archiving is a documented GACP requirement but is not yet an enforced capability. Existing files under `archives/`, prior manual uses of `/archive`, and historical archive manifests must not be treated as proof that all sessions have been archived or accounted for.
+
+The next time GACP session archiving is operationalized, extended, validated, or relied upon as a governed capability, the archive-completeness control must be built and proven before it is declared enforced. That work must:
+
+1. Inventory the then-current Codex saved-session state, Codex archived-session state, and GACP `archives/` evidence without publishing raw transcripts merely to perform the inventory.
+2. Define and enforce 100% accounting for every Codex interactive session participating in a GACP-governed workflow, including substantive work sessions, short publication/mechanical sessions, diagnostic or no-op sessions, and aborted sessions.
+3. Keep local session archival separate from public Git publication. A session may require local archival and accounting without requiring its raw transcript or a full portable derivative to be published.
+4. Create a deterministic reconciliation record or ledger that identifies each in-scope session and its archive state, and records any genuine exception explicitly rather than silently omitting the session.
+5. Provide a repeatable way to compare saved/active sessions, locally archived sessions, and governed Git archive evidence so missing coverage is detectable.
+6. Build whatever bounded runner, hook, or other deterministic mechanism is approved to make the required end-of-session archival behavior reliable without creating recursive archive-publication loops.
+7. Prove the control with a bounded test, review the result, and obtain the applicable owner acceptance before GACP claims archive completeness is enforced.
+
+The historical 2026-08-03 manual stopping rule allowed a short archive-publication session to be exited without archiving it in order to avoid recursion. That remains valid historical evidence of the proof workflow, but it is not the target policy for the future completeness control described here.
+
+Until this deferred requirement has been implemented and proven, agents must describe archive coverage as unverified or partial when completeness matters; they must not claim that GACP archives contain every applicable session.
+
 ## Preserve established work
 
 Do not:
